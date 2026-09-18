@@ -46,6 +46,14 @@ test("computer is installed as its own Scene Control for Foundry 13 and 14 shape
   assert.equal(arrayControls.length, 3);
 });
 
+test("scene and journal entry point hooks register before Foundry init", () => {
+  const source = readFileSync(new URL("../scripts/main.js", import.meta.url), "utf8");
+  const init = source.indexOf('Hooks.once("init"');
+  assert.ok(init > 0);
+  assert.ok(source.indexOf('Hooks.on("getSceneControlButtons"') < init);
+  assert.ok(source.indexOf('Hooks.on("renderJournalDirectory"') < init);
+});
+
 test("registry orders built-in ids and rejects duplicates", () => {
   const registry = new ComputerAppRegistry();
   registry.register({ id: "crew", label: "Crew" });

@@ -138,6 +138,11 @@ function addJournalDirectoryButton(_app, html) {
   actions.append(button);
 }
 
+// These render hooks can fire during Foundry initialization. Register them as
+// soon as the module is evaluated, before the init hook begins.
+Hooks.on("getSceneControlButtons", addSceneControl);
+Hooks.on("renderJournalDirectory", addJournalDirectoryButton);
+
 Hooks.once("init", () => {
   registerSettings();
   const permissionService = new PermissionService();
@@ -161,8 +166,6 @@ Hooks.once("init", () => {
     commandRegistry
   };
   exposeApi();
-  Hooks.on("getSceneControlButtons", addSceneControl);
-  Hooks.on("renderJournalDirectory", addJournalDirectoryButton);
   for (const documentName of ["JournalEntry", "Actor", "Scene", "Folder"]) {
     Hooks.on(`create${documentName}`, queueComputerRefresh);
     Hooks.on(`update${documentName}`, queueComputerRefresh);
