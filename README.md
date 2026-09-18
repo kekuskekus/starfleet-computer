@@ -26,6 +26,8 @@ https://github.com/kekuskekus/starfleet-computer/releases/latest/download/module
 
 The module runs on Foundry VTT 13–14 without `sta2e-toolkit`. When Toolkit is installed and active, Astrometrics discovers its Star System Actors and existing generated Scenes. Without Toolkit, the rest of the Computer remains available and Toolkit-dependent controls stay disabled.
 
+Open the Computer from its dedicated computer icon in the Scene Controls toolbar on the left. The control is shown to both GMs and players; player access to the window follows the **Allow player access** module setting.
+
 ## Configure content
 
 Open **Configure Settings → Module Settings → Starfleet Computer**. Enter the Folder ID or Folder UUID for:

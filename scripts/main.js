@@ -87,19 +87,32 @@ function queueComputerRefresh() {
   }, 75);
 }
 
-function computerTool() {
-  return {
-    name: MODULE_ID,
-    title: game.i18n.localize("STARFLEET.OpenComputer"),
-    icon: "fas fa-computer",
-    visible: playerAccessAllowed(),
+function computerControl() {
+  const title = game.i18n.localize("STARFLEET.OpenComputer");
+  const openTool = {
+    name: `${MODULE_ID}-open`,
+    title,
+    icon: "fa-solid fa-computer",
+    order: 0,
+    visible: true,
     button: true,
     onChange: () => openComputer()
+  };
+  return {
+    name: MODULE_ID,
+    title,
+    icon: "fa-solid fa-computer",
+    visible: true,
+    activeTool: openTool.name,
+    tools: { [openTool.name]: openTool },
+    onChange: (_event, active) => {
+      if (active !== false) openComputer();
+    }
   };
 }
 
 function addSceneControl(controls) {
-  installComputerSceneControl(controls, computerTool());
+  installComputerSceneControl(controls, computerControl());
 }
 
 function addJournalDirectoryButton(_app, html) {

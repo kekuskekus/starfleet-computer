@@ -1,18 +1,15 @@
-export function installComputerSceneControl(controls, tool) {
-  const tokenGroup = Array.isArray(controls)
-    ? controls.find(control => control?.name === "tokens" || control?.name === "token")
-    : controls?.tokens ?? controls?.token;
-  if (!tokenGroup?.tools) return false;
+export function installComputerSceneControl(controls, control) {
+  if (!controls || !control?.name) return false;
 
-  if (Array.isArray(tokenGroup.tools)) {
-    if (!tokenGroup.tools.some(entry => entry.name === tool.name)) tokenGroup.tools.push(tool);
+  if (Array.isArray(controls)) {
+    if (!controls.some(entry => entry.name === control.name)) controls.push(control);
     return true;
   }
 
-  if (!tokenGroup.tools[tool.name]) {
-    tokenGroup.tools[tool.name] = {
-      ...tool,
-      order: Object.keys(tokenGroup.tools).length
+  if (!controls[control.name]) {
+    controls[control.name] = {
+      ...control,
+      order: Object.keys(controls).length
     };
   }
   return true;

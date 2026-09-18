@@ -19,25 +19,31 @@ test("manifest keeps STA2e Toolkit optional and supports Foundry 13 through 14",
   assert.deepEqual(manifest.relationships.optional, [{ id: "sta2e-toolkit", type: "module" }]);
 });
 
-test("computer control is installed only in Token Controls for Foundry 13 and 14 shapes", () => {
-  const tool = { name: "starfleet-computer", button: true };
+test("computer is installed as its own Scene Control for Foundry 13 and 14 shapes", () => {
+  const control = {
+    name: "starfleet-computer",
+    visible: true,
+    activeTool: "starfleet-computer-open",
+    tools: { "starfleet-computer-open": { button: true, visible: true } }
+  };
   const objectControls = {
     tokens: { tools: { select: { name: "select" } } },
     tiles: { tools: {} }
   };
-  assert.equal(installComputerSceneControl(objectControls, tool), true);
-  assert.equal(objectControls.tokens.tools[tool.name].name, tool.name);
-  assert.equal(objectControls.tokens.tools[tool.name].order, 1);
-  assert.equal(objectControls.tiles.tools[tool.name], undefined);
+  assert.equal(installComputerSceneControl(objectControls, control), true);
+  assert.equal(objectControls[control.name].name, control.name);
+  assert.equal(objectControls[control.name].visible, true);
+  assert.equal(objectControls[control.name].order, 2);
+  assert.equal(objectControls.tokens.tools[control.name], undefined);
 
   const arrayControls = [
     { name: "tiles", tools: [] },
     { name: "token", tools: [] }
   ];
-  assert.equal(installComputerSceneControl(arrayControls, tool), true);
-  assert.deepEqual(arrayControls[1].tools, [tool]);
-  installComputerSceneControl(arrayControls, tool);
-  assert.equal(arrayControls[1].tools.length, 1);
+  assert.equal(installComputerSceneControl(arrayControls, control), true);
+  assert.equal(arrayControls[2], control);
+  installComputerSceneControl(arrayControls, control);
+  assert.equal(arrayControls.length, 3);
 });
 
 test("registry orders built-in ids and rejects duplicates", () => {
