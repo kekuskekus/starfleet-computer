@@ -4,6 +4,7 @@ import { Sta2eToolkitAdapter } from "./adapters/Sta2eToolkitAdapter.js";
 import { PermissionService } from "./services/PermissionService.js";
 import { DocumentResolver } from "./services/DocumentResolver.js";
 import { ComputerDataService } from "./services/ComputerDataService.js";
+import { CommunicationService } from "./services/CommunicationService.js";
 import { ComputerAppRegistry } from "./apps/ComputerAppRegistry.js";
 import { registerBuiltins } from "./apps/registerBuiltins.js";
 import { StarfleetComputerApp } from "./apps/StarfleetComputerApp.js";
@@ -11,6 +12,7 @@ import * as components from "./components.js";
 
 let computer = null;
 let services = null;
+let refreshTimer = null;
 
 function playerAccessAllowed() {
   return game.user?.isGM || getSetting(SETTINGS.PLAYER_ACCESS);
@@ -56,11 +58,21 @@ function exposeApi() {
       return removed;
     },
     get toolkit() { return services.toolkitAdapter; },
+    get communications() { return services.communicationService; },
     components
   };
   const module = game.modules.get(MODULE_ID);
   if (module) module.api = api;
   return api;
+}
+
+function queueComputerRefresh() {
+  if (!computer) return;
+  if (refreshTimer) clearTimeout(refreshTimer);
+  refreshTimer = setTimeout(() => {
+    refreshTimer = null;
+    computer?.renderParts().catch(error => console.error(`${MODULE_ID} | Refresh failed`, error));
+  }, 75);
 }
 
 function computerTool() {
@@ -96,15 +108,26 @@ Hooks.once("init", () => {
   const toolkitAdapter = new Sta2eToolkitAdapter({ permissionService });
   const registry = new ComputerAppRegistry();
   registerBuiltins(registry);
+  const documentResolver = new DocumentResolver(permissionService);
+  const dataService = new ComputerDataService({ permissionService, toolkitAdapter });
   services = {
     registry,
     permissionService,
     toolkitAdapter,
-    documentResolver: new DocumentResolver(permissionService),
-    dataService: new ComputerDataService({ permissionService, toolkitAdapter })
+    documentResolver,
+    dataService,
+    communicationService: new CommunicationService({ dataService, permissionService, documentResolver })
   };
   exposeApi();
   Hooks.on("getSceneControlButtons", addSceneControl);
+  for (const documentName of ["JournalEntry", "Actor", "Scene", "Folder"]) {
+    Hooks.on(`create${documentName}`, queueComputerRefresh);
+    Hooks.on(`update${documentName}`, queueComputerRefresh);
+    Hooks.on(`delete${documentName}`, queueComputerRefresh);
+  }
+  Hooks.on("updateUser", (user) => {
+    if (user.id === game.user?.id) queueComputerRefresh();
+  });
 });
 
 Hooks.once("ready", () => {

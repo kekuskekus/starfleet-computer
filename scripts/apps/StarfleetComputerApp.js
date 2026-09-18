@@ -22,6 +22,10 @@ export class StarfleetComputerApp extends HandlebarsApplicationMixin(Application
       back: StarfleetComputerApp.backAction,
       home: StarfleetComputerApp.homeAction,
       selectEntry: StarfleetComputerApp.selectEntryAction,
+      selectCommunication: StarfleetComputerApp.selectCommunicationAction,
+      toggleComposer: StarfleetComputerApp.toggleComposerAction,
+      createMessage: StarfleetComputerApp.createMessageAction,
+      openAttachment: StarfleetComputerApp.openAttachmentAction,
       openDocument: StarfleetComputerApp.openDocumentAction,
       openCharacterSheet: StarfleetComputerApp.openCharacterSheetAction,
       openStarSystem: StarfleetComputerApp.openStarSystemAction,
@@ -35,17 +39,19 @@ export class StarfleetComputerApp extends HandlebarsApplicationMixin(Application
     content: { template: `modules/${MODULE_ID}/templates/computer.hbs` }
   };
 
-  constructor({ registry, dataService, permissionService, documentResolver, toolkitAdapter } = {}, options = {}) {
+  constructor({ registry, dataService, permissionService, documentResolver, toolkitAdapter, communicationService } = {}, options = {}) {
     super(options);
     this.registry = registry;
     this.dataService = dataService;
     this.permissions = permissionService;
     this.documents = documentResolver;
     this.toolkit = toolkitAdapter;
+    this.communications = communicationService;
     this.activeAppId = APP_IDS.HOME;
     this.history = [];
     this.selectedId = null;
     this.loading = false;
+    this.showComposer = false;
   }
 
   async _prepareContext(options) {
@@ -59,6 +65,7 @@ export class StarfleetComputerApp extends HandlebarsApplicationMixin(Application
           ? await prepare({
               data: this.dataService,
               toolkit: this.toolkit,
+              communications: this.communications,
               registry: this.registry,
               selectedId: this.selectedId
             })
@@ -85,11 +92,18 @@ export class StarfleetComputerApp extends HandlebarsApplicationMixin(Application
       appContext.systemSceneAvailable = Boolean(system && this.toolkit.getMainSystemScene(system.actorId));
     }
 
+    if (appContext.view === "comms") appContext.showComposer = this.showComposer;
+
+    const unreadCommunications = appContext.view === "comms"
+      ? appContext.entries.reduce((count, entry) => count + (entry.isUnread ? 1 : 0), 0)
+      : await this.communications.getUnreadCount();
+
     const apps = this.registry.list().map(app => ({
       ...app,
       labelText: game.i18n.localize(app.label),
       active: app.id === activeApp?.id,
-      disabled: Boolean(app.toolkitDependent && !this.toolkit.isAvailable())
+      disabled: Boolean(app.toolkitDependent && !this.toolkit.isAvailable()),
+      badge: app.id === APP_IDS.COMMS && unreadCommunications > 0 ? unreadCommunications : null
     }));
 
     return {
@@ -148,6 +162,57 @@ export class StarfleetComputerApp extends HandlebarsApplicationMixin(Application
   static selectEntryAction(_event, target) {
     this.selectedId = target.dataset.id;
     return this.renderParts(["content"]);
+  }
+
+  static async selectCommunicationAction(_event, target) {
+    this.selectedId = target.dataset.id;
+    try {
+      await this.communications.markRead(target.dataset.uuid);
+    } catch (error) {
+      console.error(`${MODULE_ID} | Failed to persist communication read state`, error);
+      ui.notifications.warn(game.i18n.localize("STARFLEET.Comms.ReadStateFailed"));
+    }
+    return this.renderParts(["navigation", "content"]);
+  }
+
+  static toggleComposerAction() {
+    this.showComposer = !this.showComposer;
+    return this.renderParts(["content"]);
+  }
+
+  static async createMessageAction(event, target) {
+    event.preventDefault();
+    const form = target.closest("form");
+    if (!form) return;
+    const values = Object.fromEntries(new FormData(form).entries());
+    values.encrypted = form.elements.encrypted?.checked === true;
+    try {
+      const message = await this.communications.createMessage(values);
+      this.showComposer = false;
+      this.selectedId = message.id;
+      ui.notifications.info(game.i18n.localize("STARFLEET.Comms.Sent"));
+      await this.renderParts(["navigation", "content"]);
+    } catch (error) {
+      console.error(`${MODULE_ID} | Failed to create communication`, error);
+      ui.notifications.error(error?.message || String(error));
+    }
+  }
+
+  static async openAttachmentAction(_event, target) {
+    const document = await this.documents.resolve(target.dataset.uuid);
+    if (!document) {
+      ui.notifications.warn(game.i18n.localize("STARFLEET.Comms.AttachmentUnavailable"));
+      return;
+    }
+    if (this.toolkit.isStarSystemActor(document)) {
+      await this.navigate(APP_IDS.ASTROMETRICS, { selectedId: document.id });
+      return;
+    }
+    if (document.documentName === "Scene" && typeof document.view === "function") {
+      await document.view();
+      return;
+    }
+    document.sheet?.render(true);
   }
 
   static openDocumentAction(_event, target) {

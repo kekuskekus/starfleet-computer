@@ -72,6 +72,43 @@
       </div>
       {{#with content.selected}}<article class="sf-inline-viewer"><p class="sf-kicker">{{path}}</p><h2>{{title}}</h2><div class="sf-prose">{{{html}}}</div></article>{{/with}}
     </section>
+  {{else if (eq content.view "comms")}}
+    <section class="sf-comms">
+      <div class="sf-section-title"><span>05</span><h2>{{localize "STARFLEET.App.Comms"}}</h2>{{#if content.canCompose}}<button type="button" class="sf-compose-toggle" data-action="toggleComposer"><i class="fa-solid fa-plus"></i> {{localize "STARFLEET.Comms.New"}}</button>{{/if}}</div>
+      {{#if content.showComposer}}
+        <form class="sf-composer">
+          <label>{{localize "STARFLEET.Comms.Sender"}}<input type="text" name="sender" value="{{content.defaultSender}}" required></label>
+          <label>{{localize "STARFLEET.Comms.Recipient"}}<select name="recipient" required>{{#each content.recipientOptions}}<option value="{{value}}">{{label}}</option>{{/each}}</select></label>
+          <label class="sf-composer__wide">{{localize "STARFLEET.Comms.Subject"}}<input type="text" name="subject" required></label>
+          <label>{{localize "STARFLEET.Comms.Timestamp"}}<input type="datetime-local" name="timestamp" value="{{content.defaultTimestamp}}"></label>
+          <label>{{localize "STARFLEET.Comms.Priority"}}<select name="priority"><option value="normal">{{localize "STARFLEET.Comms.Normal"}}</option><option value="priority">{{localize "STARFLEET.Comms.PriorityTransmission"}}</option><option value="urgent">{{localize "STARFLEET.Comms.Urgent"}}</option></select></label>
+          <label class="sf-composer__wide">{{localize "STARFLEET.Comms.Image"}}<input type="text" name="image" placeholder="path/to/image.webp"></label>
+          <label class="sf-composer__wide">{{localize "STARFLEET.Comms.Attachment"}}<input type="text" name="attachmentUuid" placeholder="Actor.x / JournalEntry.x / Scene.x"></label>
+          <label class="sf-composer__wide">{{localize "STARFLEET.Comms.Body"}}<textarea name="body" rows="7" required></textarea></label>
+          <label class="sf-composer__check"><input type="checkbox" name="encrypted"> {{localize "STARFLEET.Comms.Encrypted"}}</label>
+          <div class="sf-composer__actions"><button type="button" data-action="createMessage">{{localize "STARFLEET.Comms.Send"}}</button><button type="button" data-action="toggleComposer">{{localize "STARFLEET.Comms.Cancel"}}</button></div>
+        </form>
+      {{/if}}
+      <div class="sf-browser sf-comms__browser">
+        <aside class="sf-browser__list">
+          {{#each content.entries}}
+            <button type="button" data-action="selectCommunication" data-id="{{id}}" data-uuid="{{uuid}}" class="sf-list-row sf-message-row {{#if isUnread}}is-unread{{/if}} {{#if (eq ../content.selected.id id)}}is-selected{{/if}}">
+              <span class="sf-message-row__top"><strong>{{subject}}</strong>{{#if isUnread}}<i class="sf-unread-dot" title="{{localize 'STARFLEET.Comms.Unread'}}"></i>{{/if}}</span><span>{{sender}} · {{timestamp}}</span><small>{{recipientLabel}}</small>
+            </button>
+          {{else}}<p class="sf-empty">{{localize "STARFLEET.Comms.NoMessages"}}</p>{{/each}}
+        </aside>
+        <article class="sf-viewer sf-message-viewer">
+          {{#with content.selected}}
+            <div class="sf-message-flags"><span class="sf-priority sf-priority--{{priority}}">{{priority}}</span>{{#if encrypted}}<span><i class="fa-solid fa-lock"></i> {{localize "STARFLEET.Comms.Classified"}}</span>{{/if}}</div>
+            <h2>{{subject}}</h2>
+            <dl><dt>{{localize "STARFLEET.Comms.From"}}</dt><dd>{{sender}}</dd><dt>{{localize "STARFLEET.Comms.To"}}</dt><dd>{{recipientLabel}}</dd><dt>{{localize "STARFLEET.Comms.Timestamp"}}</dt><dd>{{timestamp}}</dd></dl>
+            {{#if image}}<img class="sf-message-image" src="{{image}}" alt="">{{/if}}
+            <div class="sf-prose">{{{html}}}</div>
+            {{#if attachmentUuid}}<button type="button" data-action="openAttachment" data-uuid="{{attachmentUuid}}"><i class="fa-solid fa-paperclip"></i> {{localize "STARFLEET.Comms.OpenAttachment"}}</button>{{/if}}
+          {{else}}<p class="sf-empty">{{localize "STARFLEET.Comms.SelectMessage"}}</p>{{/with}}
+        </article>
+      </div>
+    </section>
   {{else if (eq content.view "astrometrics")}}
     <section>
       <div class="sf-section-title"><span>06</span><h2>{{localize "STARFLEET.App.Astrometrics"}}</h2></div>

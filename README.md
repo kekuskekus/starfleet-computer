@@ -2,16 +2,17 @@
 
 LCARS-style player interface for a Foundry VTT v14 Star Trek Adventures 2e world. It uses Foundry Journals and Actors as canonical content and discovers existing `sta2e-toolkit` Star System Actors and generated Scenes instead of duplicating them.
 
-This release implements SC-01 through SC-04:
+This release implements SC-01 through SC-05:
 
 - a resizable `ApplicationV2` shell with one instance per client;
 - Home, persistent navigation, status, user, world and Toolkit stardate display;
 - permission-filtered data services for Journals, Journal pages, Actors, Folders and Scenes;
 - Ship Logs, Database, Crew and filesystem-style Files applications;
+- persistent Communications with GM authoring, private recipients, unread state and UUID attachments;
 - a dedicated `Sta2eToolkitAdapter` for Star System discovery and public Toolkit actions;
 - public API for opening the Computer and registering additional applications.
 
-Communications, the full Astrometrics browser and Computer Search remain visible in the shell for later SC tasks. Database Star System records already route through the adapter to the Toolkit record and existing system Scene.
+The full Astrometrics browser and Computer Search remain visible in the shell for later SC tasks. Database Star System records and Communication attachments already route through the adapter to the Toolkit record and existing system Scene.
 
 ## Install
 
@@ -30,7 +31,7 @@ Open **Configure Settings → Module Settings → Starfleet Computer**. Enter th
 - Ship Logs
 - Database
 - Files
-- Communications (reserved for SC-05)
+- Communications
 
 The configured Journal folder and all descendant folders are read dynamically. Standard Foundry ownership controls visibility. A player who cannot observe a document will not see it in the Computer. The GM sees all records.
 
@@ -54,6 +55,24 @@ Crew includes permitted character Actors, player-owned Actors, and Actors explic
 ```
 
 The flags are optional. Source documents remain canonical and are never copied.
+
+## Communications
+
+The GM creates transmissions from the Comms application. Messages are Journal Entries in the configured Communications folder and can be addressed to everyone, one Foundry User, one Actor, or a named group. The module sets Journal ownership to match the recipient and also filters the Computer inbox, so unrelated players do not receive private transmissions.
+
+Read state is stored persistently on each User document. Attachments can reference permitted Journal pages, Actors, Toolkit Star Systems or Scenes by UUID. Star System attachments open in Astrometrics; Scene attachments use Foundry's normal Scene workflow.
+
+Groups are optional arrays on User or Actor flags:
+
+```json
+{
+  "flags": {
+    "starfleet-computer": {
+      "groups": ["bridge", "engineering"]
+    }
+  }
+}
+```
 
 ## Public API
 

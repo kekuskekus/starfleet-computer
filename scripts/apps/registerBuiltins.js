@@ -43,7 +43,21 @@ export function registerBuiltins(registry) {
     icon: "fa-solid fa-folder-tree",
     async prepare({ data }) { return { view: "files", entries: await data.getFiles() }; }
   });
-  registry.register({ id: APP_IDS.COMMS, label: "STARFLEET.App.Comms", icon: "fa-solid fa-satellite-dish", toolkitIndependent: true });
+  registry.register({
+    id: APP_IDS.COMMS,
+    label: "STARFLEET.App.Comms",
+    icon: "fa-solid fa-satellite-dish",
+    async prepare({ communications }) {
+      return {
+        view: "comms",
+        entries: await communications.getMessages(),
+        recipientOptions: game.user?.isGM ? communications.getRecipientOptions() : [],
+        canCompose: game.user?.isGM === true,
+        defaultSender: game.user?.name ?? "",
+        defaultTimestamp: new Date().toISOString().slice(0, 16)
+      };
+    }
+  });
   registry.register({ id: APP_IDS.ASTROMETRICS, label: "STARFLEET.App.Astrometrics", icon: "fa-solid fa-globe", toolkitDependent: true });
   registry.register({ id: APP_IDS.COMPUTER, label: "STARFLEET.App.Computer", icon: "fa-solid fa-terminal", toolkitIndependent: true });
 }

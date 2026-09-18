@@ -1,7 +1,7 @@
 <nav class="sf-nav" aria-label="{{localize 'STARFLEET.Navigation'}}">
   {{#each apps}}
     <button type="button" class="sf-nav__button {{#if active}}is-active{{/if}}" data-action="navigate" data-app-id="{{id}}" {{#if disabled}}disabled title="{{localize 'STARFLEET.Warning.ToolkitUnavailable'}}"{{/if}}>
-      <i class="{{icon}}"></i><span>{{labelText}}</span>
+      <i class="{{icon}}"></i><span>{{labelText}}{{#if badge}} <b class="sf-badge">{{badge}}</b>{{/if}}</span>
     </button>
   {{/each}}
 </nav>

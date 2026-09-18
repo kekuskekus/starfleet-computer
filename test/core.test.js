@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { ComputerAppRegistry } from "../scripts/apps/ComputerAppRegistry.js";
 import { PermissionService } from "../scripts/services/PermissionService.js";
 import { Sta2eToolkitAdapter } from "../scripts/adapters/Sta2eToolkitAdapter.js";
+import { CommunicationService, messageMatchesAudience, normalizeRecipient, normalizeRecipients } from "../scripts/services/CommunicationService.js";
 
 test("registry orders built-in ids and rejects duplicates", () => {
   const registry = new ComputerAppRegistry();
@@ -39,4 +40,36 @@ test("toolkit adapter discovers systems and separates system and planet scenes",
   assert.equal(adapter.getMainSystemScene(actor).id, "s1");
   assert.deepEqual(adapter.getPlanetScenes(actor).map(scene => scene.id), ["s2"]);
   assert.equal(adapter.getStardate(), "49523.7");
+});
+
+test("communication recipients normalize and enforce private audiences", () => {
+  assert.deepEqual(normalizeRecipient("user:u1"), { type: "user", id: "u1", label: "u1" });
+  assert.deepEqual(normalizeRecipients({ recipient: "everyone" })[0].type, "everyone");
+  const audience = {
+    userIds: new Set(["u1"]),
+    actorIds: new Set(["a1", "Actor.a1"]),
+    groups: new Set(["bridge"])
+  };
+  assert.equal(messageMatchesAudience(normalizeRecipients({ recipient: "user:u1" }), audience), true);
+  assert.equal(messageMatchesAudience(normalizeRecipients({ recipient: "actor:a2" }), audience), false);
+  assert.equal(messageMatchesAudience(normalizeRecipients({ recipient: "group:bridge" }), audience), true);
+  assert.equal(messageMatchesAudience(normalizeRecipients({ recipient: "group:engineering" }), audience), false);
+});
+
+test("actor-addressed communications grant Journal visibility only to its owners and GMs", () => {
+  const previousGame = globalThis.game;
+  const gm = { id: "gm", isGM: true };
+  const owner = { id: "u1", isGM: false };
+  const other = { id: "u2", isGM: false };
+  const actor = {
+    id: "a1",
+    testUserPermission(user) { return user.id === "u1"; }
+  };
+  globalThis.game = { actors: new Map([["a1", actor]]), users: [gm, owner, other] };
+  try {
+    const service = new CommunicationService();
+    assert.deepEqual(service.ownershipFor({ type: "actor", id: "a1" }), { default: 0, gm: 2, u1: 2 });
+  } finally {
+    globalThis.game = previousGame;
+  }
 });
