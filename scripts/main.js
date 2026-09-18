@@ -130,12 +130,6 @@ Hooks.once("init", () => {
   });
 });
 
-Hooks.once("ready", () => {
-  if (!services.toolkitAdapter.isAvailable() && game.user?.isGM) {
-    ui.notifications.error(game.i18n.localize("STARFLEET.Warning.ToolkitUnavailable"), { permanent: true });
-  }
-});
-
 Hooks.on("closeStarfleetComputerApp", () => {
   computer = null;
 });

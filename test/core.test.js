@@ -1,9 +1,18 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { ComputerAppRegistry } from "../scripts/apps/ComputerAppRegistry.js";
 import { PermissionService } from "../scripts/services/PermissionService.js";
 import { Sta2eToolkitAdapter } from "../scripts/adapters/Sta2eToolkitAdapter.js";
 import { CommunicationService, messageMatchesAudience, normalizeRecipient, normalizeRecipients } from "../scripts/services/CommunicationService.js";
+
+test("manifest keeps STA2e Toolkit optional and supports Foundry 13 through 14", () => {
+  const manifest = JSON.parse(readFileSync(new URL("../module.json", import.meta.url), "utf8"));
+  assert.equal(manifest.compatibility.minimum, "13");
+  assert.equal(manifest.compatibility.maximum, "14");
+  assert.equal(manifest.relationships.requires, undefined);
+  assert.deepEqual(manifest.relationships.optional, [{ id: "sta2e-toolkit", type: "module" }]);
+});
 
 test("registry orders built-in ids and rejects duplicates", () => {
   const registry = new ComputerAppRegistry();

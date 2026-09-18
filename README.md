@@ -22,7 +22,7 @@ In Foundry VTT v14, open **Add-on Modules → Install Module**, paste this manif
 https://github.com/kekuskekus/starfleet-computer/releases/latest/download/module.json
 ```
 
-`sta2e-toolkit` 1.22.0 or newer is required and must be enabled in the world.
+The module runs on Foundry VTT 13–14 without `sta2e-toolkit`. When Toolkit is installed and active, Astrometrics discovers its Star System Actors and existing generated Scenes. Without Toolkit, the rest of the Computer remains available and Toolkit-dependent controls stay disabled.
 
 ## Configure content
 
