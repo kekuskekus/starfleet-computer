@@ -12,6 +12,7 @@ import { CommandRegistry } from "./apps/CommandRegistry.js";
 import { registerBuiltins } from "./apps/registerBuiltins.js";
 import { registerCommands } from "./apps/registerCommands.js";
 import { StarfleetComputerApp } from "./apps/StarfleetComputerApp.js";
+import { installComputerSceneControl } from "./ui/entrypoints.js";
 import * as components from "./components.js";
 
 let computer = null;
@@ -89,8 +90,8 @@ function queueComputerRefresh() {
 function computerTool() {
   return {
     name: MODULE_ID,
-    title: "STARFLEET.Title",
-    icon: "fa-solid fa-computer",
+    title: game.i18n.localize("STARFLEET.OpenComputer"),
+    icon: "fas fa-computer",
     visible: playerAccessAllowed(),
     button: true,
     onChange: () => openComputer()
@@ -98,19 +99,30 @@ function computerTool() {
 }
 
 function addSceneControl(controls) {
-  const tool = computerTool();
-  if (Array.isArray(controls)) {
-    const control = controls.find(entry => entry.name === "token") ?? controls[0];
-    if (control && !control.tools?.some(entry => entry.name === MODULE_ID)) control.tools.push(tool);
-    return;
-  }
-  const control = controls.tokens ?? controls.token ?? Object.values(controls)[0];
-  if (!control) return;
-  if (Array.isArray(control.tools)) {
-    if (!control.tools.some(entry => entry.name === MODULE_ID)) control.tools.push(tool);
-  } else if (control.tools && !control.tools[MODULE_ID]) {
-    control.tools[MODULE_ID] = tool;
-  }
+  installComputerSceneControl(controls, computerTool());
+}
+
+function addJournalDirectoryButton(_app, html) {
+  if (!playerAccessAllowed()) return;
+  const root = html instanceof HTMLElement ? html : html?.[0] ?? html;
+  if (!root || root.querySelector(".starfleet-open-computer")) return;
+  const actions = root.querySelector(".directory-header .header-actions")
+    ?? root.querySelector(".header-actions")
+    ?? root.querySelector(".directory-header");
+  if (!actions) return;
+
+  const label = game.i18n.localize("STARFLEET.OpenComputer");
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "starfleet-open-computer";
+  button.title = label;
+  button.innerHTML = `<i class="fas fa-computer"></i><span>${label}</span>`;
+  button.addEventListener("click", event => {
+    event.preventDefault();
+    event.stopPropagation();
+    openComputer();
+  });
+  actions.append(button);
 }
 
 Hooks.once("init", () => {
@@ -137,6 +149,7 @@ Hooks.once("init", () => {
   };
   exposeApi();
   Hooks.on("getSceneControlButtons", addSceneControl);
+  Hooks.on("renderJournalDirectory", addJournalDirectoryButton);
   for (const documentName of ["JournalEntry", "Actor", "Scene", "Folder"]) {
     Hooks.on(`create${documentName}`, queueComputerRefresh);
     Hooks.on(`update${documentName}`, queueComputerRefresh);

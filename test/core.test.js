@@ -9,6 +9,7 @@ import { AstrometricsService } from "../scripts/services/AstrometricsService.js"
 import { SearchService, plainText, searchTerms } from "../scripts/services/SearchService.js";
 import { CommandRegistry } from "../scripts/apps/CommandRegistry.js";
 import { registerCommands } from "../scripts/apps/registerCommands.js";
+import { installComputerSceneControl } from "../scripts/ui/entrypoints.js";
 
 test("manifest keeps STA2e Toolkit optional and supports Foundry 13 through 14", () => {
   const manifest = JSON.parse(readFileSync(new URL("../module.json", import.meta.url), "utf8"));
@@ -16,6 +17,27 @@ test("manifest keeps STA2e Toolkit optional and supports Foundry 13 through 14",
   assert.equal(manifest.compatibility.maximum, "14");
   assert.equal(manifest.relationships.requires, undefined);
   assert.deepEqual(manifest.relationships.optional, [{ id: "sta2e-toolkit", type: "module" }]);
+});
+
+test("computer control is installed only in Token Controls for Foundry 13 and 14 shapes", () => {
+  const tool = { name: "starfleet-computer", button: true };
+  const objectControls = {
+    tokens: { tools: { select: { name: "select" } } },
+    tiles: { tools: {} }
+  };
+  assert.equal(installComputerSceneControl(objectControls, tool), true);
+  assert.equal(objectControls.tokens.tools[tool.name].name, tool.name);
+  assert.equal(objectControls.tokens.tools[tool.name].order, 1);
+  assert.equal(objectControls.tiles.tools[tool.name], undefined);
+
+  const arrayControls = [
+    { name: "tiles", tools: [] },
+    { name: "token", tools: [] }
+  ];
+  assert.equal(installComputerSceneControl(arrayControls, tool), true);
+  assert.deepEqual(arrayControls[1].tools, [tool]);
+  installComputerSceneControl(arrayControls, tool);
+  assert.equal(arrayControls[1].tools.length, 1);
 });
 
 test("registry orders built-in ids and rejects duplicates", () => {
