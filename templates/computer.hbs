@@ -1,0 +1,85 @@
+<main class="sf-content" aria-live="polite">
+  {{#if (eq content.view "loading")}}
+    <section class="sf-state"><i class="fa-solid fa-spinner fa-spin"></i><h2>{{localize "STARFLEET.State.Loading"}}</h2></section>
+  {{else if (eq content.view "error")}}
+    <section class="sf-state sf-alert"><i class="fa-solid fa-triangle-exclamation"></i><h2>{{localize "STARFLEET.State.Error"}}</h2><p>{{content.message}}</p></section>
+  {{else if (eq content.view "home")}}
+    <section class="sf-home">
+      <div class="sf-section-title"><span>01</span><h2>{{localize "STARFLEET.Home.Welcome"}}</h2></div>
+      <div class="sf-app-grid">
+        {{#each content.apps}}
+          <button type="button" class="sf-app-card" data-action="navigate" data-app-id="{{id}}">
+            <i class="{{icon}}"></i><span>{{localize label}}</span>
+          </button>
+        {{/each}}
+      </div>
+    </section>
+  {{else if (eq content.view "logs")}}
+    <section class="sf-browser">
+      <aside class="sf-browser__list">
+        <h2>{{localize "STARFLEET.App.Logs"}}</h2>
+        {{#each content.entries}}
+          <button type="button" data-action="selectEntry" data-id="{{id}}" class="sf-list-row {{#if (eq ../content.selected.id id)}}is-selected{{/if}}">
+            <strong>{{title}}</strong><span>{{author}} · {{date}}</span>
+          </button>
+        {{else}}<p class="sf-empty">{{localize "STARFLEET.State.NoRecords"}}</p>{{/each}}
+      </aside>
+      <article class="sf-viewer">
+        {{#with content.selected}}
+          <p class="sf-kicker">{{category}} · {{author}} · {{date}}</p><h2>{{title}}</h2><div class="sf-prose">{{{html}}}</div>
+        {{else}}<p class="sf-empty">{{localize "STARFLEET.State.SelectRecord"}}</p>{{/with}}
+      </article>
+    </section>
+  {{else if (eq content.view "database")}}
+    <section>
+      <div class="sf-section-title"><span>02</span><h2>{{localize "STARFLEET.App.Database"}}</h2></div>
+      {{#each content.groups}}
+        <section class="sf-database-group"><h3>{{label}}</h3><div class="sf-record-grid">
+          {{#each records}}
+            {{#if (eq kind "star-system")}}
+              <button type="button" class="sf-record" data-action="navigate" data-app-id="astrometrics" data-id="{{id}}"><span class="sf-kicker">{{category}}</span><strong>{{title}}</strong><small>{{excerpt}}</small></button>
+            {{else}}
+              <button type="button" class="sf-record" data-action="selectEntry" data-id="{{id}}"><span class="sf-kicker">{{category}}</span><strong>{{title}}</strong><small>{{excerpt}}</small></button>
+            {{/if}}
+          {{/each}}
+        </div></section>
+      {{else}}<p class="sf-empty">{{localize "STARFLEET.State.NoRecords"}}</p>{{/each}}
+      {{#with content.selected}}
+        <article class="sf-inline-viewer"><h2>{{title}}</h2>{{#if html}}<div class="sf-prose">{{{html}}}</div>{{else}}<p>{{excerpt}}</p>{{/if}}<button type="button" data-action="openDocument" data-uuid="{{uuid}}">{{localize "STARFLEET.OpenSource"}}</button></article>
+      {{/with}}
+    </section>
+  {{else if (eq content.view "crew")}}
+    <section>
+      <div class="sf-section-title"><span>03</span><h2>{{localize "STARFLEET.App.Crew"}}</h2></div>
+      <div class="sf-crew-grid">
+        {{#each content.entries}}
+          <button type="button" class="sf-crew-card" data-action="selectEntry" data-id="{{id}}">
+            <img src="{{image}}" alt=""><span><strong>{{name}}</strong><small>{{role}} · {{species}}</small></span>
+          </button>
+        {{else}}<p class="sf-empty">{{localize "STARFLEET.State.NoRecords"}}</p>{{/each}}
+      </div>
+      {{#with content.selected}}
+        <article class="sf-profile"><img src="{{image}}" alt=""><div><p class="sf-kicker">{{role}} · {{species}}</p><h2>{{name}}</h2><p>{{description}}</p><button type="button" data-action="openCharacterSheet" data-uuid="{{uuid}}">{{localize "STARFLEET.OpenCharacterSheet"}}</button></div></article>
+      {{/with}}
+    </section>
+  {{else if (eq content.view "files")}}
+    <section>
+      <div class="sf-section-title"><span>04</span><h2>{{localize "STARFLEET.App.Files"}}</h2></div>
+      <div class="sf-files">
+        {{#each content.entries}}
+          <button type="button" class="sf-file-row" data-action="selectEntry" data-id="{{id}}"><code>{{path}}/</code><strong>{{title}}</strong></button>
+        {{else}}<p class="sf-empty">{{localize "STARFLEET.State.NoRecords"}}</p>{{/each}}
+      </div>
+      {{#with content.selected}}<article class="sf-inline-viewer"><p class="sf-kicker">{{path}}</p><h2>{{title}}</h2><div class="sf-prose">{{{html}}}</div></article>{{/with}}
+    </section>
+  {{else if (eq content.view "astrometrics")}}
+    <section>
+      <div class="sf-section-title"><span>06</span><h2>{{localize "STARFLEET.App.Astrometrics"}}</h2></div>
+      {{#with content.selected}}
+        <article class="sf-system-record"><p class="sf-kicker">{{sector}} · {{region}}</p><h2>{{designation}}</h2><dl><dt>CLASS</dt><dd>{{classification}}</dd><dt>AFFILIATION</dt><dd>{{affiliation}}</dd><dt>TRAVEL CODE</dt><dd>{{travelCode}}</dd><dt>COORDINATES</dt><dd>{{coordinates.x}} / {{coordinates.y}} / {{coordinates.z}}</dd></dl><button type="button" data-action="openStarSystem" data-actor-id="{{actorId}}">{{localize "STARFLEET.OpenSystemRecord"}}</button>{{#if ../content.systemSceneAvailable}}<button type="button" data-action="openSystemScene" data-actor-id="{{actorId}}">{{localize "STARFLEET.OpenSystemMap"}}</button>{{else}}<p class="sf-alert">{{localize "STARFLEET.State.SystemMapUnavailable"}}</p>{{/if}}</article>
+      {{else}}<p class="sf-empty">{{localize "STARFLEET.State.SelectSystem"}}</p>{{/with}}
+    </section>
+  {{else}}
+    <section class="sf-state"><i class="fa-solid fa-circle-nodes"></i><h2>{{activeLabel}}</h2><p>{{content.emptyMessage}}</p></section>
+  {{/if}}
+</main>

@@ -1,0 +1,35 @@
+name: Release Foundry module
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm test
+      - run: npm run check
+      - name: Build module archive
+        shell: bash
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          mkdir -p dist/starfleet-computer
+          cp -r module.json README.md LICENSE scripts templates styles lang dist/starfleet-computer/
+          cd dist
+          zip -r "starfleet-computer-v${version}.zip" starfleet-computer
+          cp ../module.json module.json
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/module.json
+            dist/starfleet-computer-*.zip
+          generate_release_notes: true

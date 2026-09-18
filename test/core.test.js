@@ -1,0 +1,42 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { ComputerAppRegistry } from "../scripts/apps/ComputerAppRegistry.js";
+import { PermissionService } from "../scripts/services/PermissionService.js";
+import { Sta2eToolkitAdapter } from "../scripts/adapters/Sta2eToolkitAdapter.js";
+
+test("registry orders built-in ids and rejects duplicates", () => {
+  const registry = new ComputerAppRegistry();
+  registry.register({ id: "crew", label: "Crew" });
+  registry.register({ id: "home", label: "Home" });
+  assert.deepEqual(registry.list().map(app => app.id), ["home", "crew"]);
+  assert.throws(() => registry.register({ id: "home", label: "Again" }), /already registered/);
+});
+
+test("permissions honor GM access and observer ownership", () => {
+  const service = new PermissionService(() => ({ id: "player", isGM: false }));
+  assert.equal(service.canView({ ownership: { player: 2 } }), true);
+  assert.equal(service.canView({ ownership: { default: 0 } }), false);
+  assert.equal(service.canView({ ownership: {}, testUserPermission: () => true }), true);
+  assert.equal(service.canView({ ownership: {} }, { id: "gm", isGM: true }), true);
+});
+
+test("toolkit adapter discovers systems and separates system and planet scenes", () => {
+  const actor = {
+    id: "a1", uuid: "Actor.a1", name: "Talvos", img: "talvos.webp",
+    getFlag: (_scope, key) => key === "starSystem" ? { isStarSystem: true, designation: "Talvos", sector: "Golba" } : null
+  };
+  const systemScene = { id: "s1", getFlag: (_scope, key) => key === "starSystemSceneActor" ? "a1" : null };
+  const planetScene = { id: "s2", getFlag: (_scope, key) => key === "starSystemSceneActor" ? "a1" : key === "starSystemSceneWorld" ? "w1" : null };
+  const fakeGame = {
+    modules: new Map([["sta2e-toolkit", { active: true }]]),
+    sta2eToolkit: { getActiveCampaign: () => ({ stardate: 49523.7 }) },
+    actors: new Map([["a1", actor]]),
+    scenes: [systemScene, planetScene]
+  };
+  const adapter = new Sta2eToolkitAdapter({ gameProvider: () => fakeGame });
+  assert.equal(adapter.isAvailable(), true);
+  assert.equal(adapter.getStarSystems()[0].designation, "Talvos");
+  assert.equal(adapter.getMainSystemScene(actor).id, "s1");
+  assert.deepEqual(adapter.getPlanetScenes(actor).map(scene => scene.id), ["s2"]);
+  assert.equal(adapter.getStardate(), "49523.7");
+});

@@ -1,0 +1,19 @@
+<header class="sf-header">
+  <div class="sf-header__stripe" aria-hidden="true"></div>
+  <div class="sf-header__identity">
+    <span class="sf-eyebrow">{{localize "STARFLEET.Title"}}</span>
+    <strong>{{activeLabel}}</strong>
+  </div>
+  <div class="sf-header__status">
+    <span>{{worldName}}</span>
+    <span>{{userName}}</span>
+    <span>{{localize "STARFLEET.Stardate"}} {{stardate}}</span>
+    <span class="sf-indicator {{#if toolkitAvailable}}is-online{{else}}is-offline{{/if}}">
+      {{#if toolkitAvailable}}{{localize "STARFLEET.State.Online"}}{{else}}{{localize "STARFLEET.State.Degraded"}}{{/if}}
+    </span>
+  </div>
+  <div class="sf-header__actions">
+    <button type="button" data-action="back" {{#unless canGoBack}}disabled{{/unless}} aria-label="{{localize 'STARFLEET.Back'}}"><i class="fa-solid fa-arrow-left"></i></button>
+    <button type="button" data-action="home" aria-label="{{localize 'STARFLEET.App.Home'}}"><i class="fa-solid fa-house"></i></button>
+  </div>
+</header>
