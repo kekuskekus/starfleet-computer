@@ -28,6 +28,8 @@
   "STARFLEET.State.FutureModule": "Это приложение будет реализовано в следующем модуле Компьютера.",
   "STARFLEET.Warning.ToolkitUnavailable": "STA2e Toolkit выключен или его публичный API недоступен. Зависимые приложения отключены.",
   "STARFLEET.Warning.PlayerAccessDisabled": "Доступ игроков к Компьютеру отключён.",
+  "STARFLEET.Warning.NotReady": "Компьютер Звёздного флота ещё загружается.",
+  "STARFLEET.Warning.LoadFailed": "Не удалось загрузить Компьютер Звёздного флота. Подробности доступны в консоли браузера.",
   "STARFLEET.Settings.PlayerAccess.Name": "Разрешить доступ игрокам",
   "STARFLEET.Settings.PlayerAccess.Hint": "Разрешает пользователям без прав GM открывать Компьютер.",
   "STARFLEET.Settings.LogsFolder.Name": "ID или UUID папки бортовых журналов",

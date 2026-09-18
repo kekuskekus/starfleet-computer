@@ -11,11 +11,11 @@ import { ComputerAppRegistry } from "./apps/ComputerAppRegistry.js";
 import { CommandRegistry } from "./apps/CommandRegistry.js";
 import { registerBuiltins } from "./apps/registerBuiltins.js";
 import { registerCommands } from "./apps/registerCommands.js";
-import { StarfleetComputerApp } from "./apps/StarfleetComputerApp.js";
 import { installComputerSceneControl } from "./ui/entrypoints.js";
 import * as components from "./components.js";
 
 let computer = null;
+let ComputerAppClass = null;
 let services = null;
 let refreshTimer = null;
 
@@ -28,7 +28,20 @@ async function openComputer() {
     ui.notifications.warn(game.i18n.localize("STARFLEET.Warning.PlayerAccessDisabled"));
     return null;
   }
-  if (!computer) computer = new StarfleetComputerApp(services);
+  if (!services) {
+    ui.notifications.warn(game.i18n.localize("STARFLEET.Warning.NotReady"));
+    return null;
+  }
+  try {
+    if (!ComputerAppClass) {
+      ({ StarfleetComputerApp: ComputerAppClass } = await import("./apps/StarfleetComputerApp.js"));
+    }
+  } catch (error) {
+    console.error(`${MODULE_ID} | Failed to load the Computer window`, error);
+    ui.notifications.error(game.i18n.localize("STARFLEET.Warning.LoadFailed"));
+    return null;
+  }
+  if (!computer) computer = new ComputerAppClass(services);
   await computer.render({ force: true });
   computer.bringToFront?.();
   return computer;

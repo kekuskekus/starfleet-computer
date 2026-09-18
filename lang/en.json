@@ -28,6 +28,8 @@
   "STARFLEET.State.FutureModule": "This application is reserved for a later Starfleet Computer module.",
   "STARFLEET.Warning.ToolkitUnavailable": "STA2e Toolkit is inactive or its public API is unavailable. Toolkit-dependent applications are disabled.",
   "STARFLEET.Warning.PlayerAccessDisabled": "Starfleet Computer access is disabled for players.",
+  "STARFLEET.Warning.NotReady": "Starfleet Computer is still initializing.",
+  "STARFLEET.Warning.LoadFailed": "Starfleet Computer could not load. See the browser console for details.",
   "STARFLEET.Settings.PlayerAccess.Name": "Allow player access",
   "STARFLEET.Settings.PlayerAccess.Hint": "Allow non-GM users to open Starfleet Computer.",
   "STARFLEET.Settings.LogsFolder.Name": "Ship Logs folder ID or UUID",

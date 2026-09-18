@@ -52,6 +52,8 @@ test("scene and journal entry point hooks register before Foundry init", () => {
   assert.ok(init > 0);
   assert.ok(source.indexOf('Hooks.on("getSceneControlButtons"') < init);
   assert.ok(source.indexOf('Hooks.on("renderJournalDirectory"') < init);
+  assert.equal(source.includes('import { StarfleetComputerApp }'), false);
+  assert.match(source, /await import\("\.\/apps\/StarfleetComputerApp\.js"\)/);
 });
 
 test("registry orders built-in ids and rejects duplicates", () => {
