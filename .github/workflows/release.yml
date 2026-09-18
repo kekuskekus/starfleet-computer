@@ -22,11 +22,10 @@ jobs:
         shell: bash
         run: |
           version="${GITHUB_REF_NAME#v}"
-          mkdir -p dist/starfleet-computer
-          cp -r module.json README.md LICENSE scripts templates styles lang dist/starfleet-computer/
-          cd dist
-          zip -r "starfleet-computer-v${version}.zip" starfleet-computer
-          cp ../module.json module.json
+          mkdir -p dist/package
+          cp -r module.json README.md LICENSE scripts templates styles lang dist/package/
+          (cd dist/package && zip -r "../starfleet-computer-v${version}.zip" .)
+          cp module.json dist/module.json
       - uses: softprops/action-gh-release@v2
         with:
           files: |
