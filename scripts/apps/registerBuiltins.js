@@ -58,6 +58,21 @@ export function registerBuiltins(registry) {
       };
     }
   });
-  registry.register({ id: APP_IDS.ASTROMETRICS, label: "STARFLEET.App.Astrometrics", icon: "fa-solid fa-globe", toolkitDependent: true });
-  registry.register({ id: APP_IDS.COMPUTER, label: "STARFLEET.App.Computer", icon: "fa-solid fa-terminal", toolkitIndependent: true });
+  registry.register({
+    id: APP_IDS.ASTROMETRICS,
+    label: "STARFLEET.App.Astrometrics",
+    icon: "fa-solid fa-globe",
+    toolkitDependent: true,
+    async prepare({ astrometrics, state, selectedId }) {
+      return astrometrics.getBrowser({ filters: state.filters, selectedId });
+    }
+  });
+  registry.register({
+    id: APP_IDS.COMPUTER,
+    label: "STARFLEET.App.Computer",
+    icon: "fa-solid fa-terminal",
+    async prepare({ state }) {
+      return { view: "computer", history: state.history ?? [] };
+    }
+  });
 }

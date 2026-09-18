@@ -80,6 +80,10 @@ export class Sta2eToolkitAdapter {
     });
   }
 
+  getSceneWorldId(scene) {
+    return scene?.getFlag?.(TOOLKIT_ID, SCENE_WORLD_FLAG) ?? null;
+  }
+
   getMainSystemScene(actorOrId) {
     return this.getSystemScenes(actorOrId).find(scene =>
       !scene.getFlag?.(TOOLKIT_ID, SCENE_WORLD_FLAG)

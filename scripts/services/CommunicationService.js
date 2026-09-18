@@ -93,6 +93,11 @@ export class CommunicationService {
     return new Set(Array.isArray(ids) ? ids.map(String) : []);
   }
 
+  isAddressedTo(entry, user = game.user) {
+    if (user?.isGM) return true;
+    return messageMatchesAudience(normalizeRecipients(moduleFlags(entry)), this.audienceFor(user));
+  }
+
   async getMessages({ user = game.user } = {}) {
     const entries = this.data.journalsFor(SETTINGS.COMMS_FOLDER);
     const audience = this.audienceFor(user);

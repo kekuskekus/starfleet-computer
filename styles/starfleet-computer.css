@@ -100,6 +100,31 @@
 .sf-system-record dl { display: grid; grid-template-columns: 140px 1fr; gap: 7px 15px; }
 .sf-system-record dt { color: var(--sf-lilac); }
 .sf-system-record dd { margin: 0; }
+.sf-astro-filters { display: grid; grid-template-columns: 2fr repeat(4, minmax(110px, 1fr)) auto auto; gap: 7px; margin-bottom: 14px; }
+.sf-astro-filters input, .sf-astro-filters select { min-width: 0; padding: 7px; border: 1px solid #535d7d; background: #080a12; color: var(--sf-text); }
+.sf-astro-filters button { padding: 7px 12px; border-radius: 16px; background: var(--sf-blue); color: #111; cursor: pointer; }
+.sf-astro-browser { display: grid; grid-template-columns: minmax(205px, 28%) minmax(0, 1fr); gap: 15px; }
+.sf-system-list { display: flex; flex-direction: column; gap: 6px; max-height: 520px; overflow-y: auto; }
+.sf-system-list small { color: var(--sf-lilac); }
+.sf-system-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.sf-system-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
+.sf-system-columns section, .sf-planet-scenes { padding: 12px; border-radius: 18px 4px; background: var(--sf-panel-2); }
+.sf-system-columns h3, .sf-planet-scenes h3 { margin: 0 0 8px; color: var(--sf-lilac); text-transform: uppercase; }
+.sf-system-columns p { margin: 4px 0; }
+.sf-planet-scenes { margin-top: 12px; }
+.sf-planet-scenes button { margin: 4px; padding: 7px 12px; border-radius: 15px; background: var(--sf-blue); color: #111; cursor: pointer; }
+.sf-terminal { display: flex; flex-direction: column; height: 100%; min-height: 380px; }
+.sf-terminal-output { flex: 1; min-height: 260px; padding: 14px; overflow-y: auto; border: 2px solid var(--sf-blue); background: rgba(0, 0, 0, .68); color: #b8e8d0; font-family: "Cascadia Mono", Consolas, monospace; }
+.sf-terminal-block { margin-bottom: 14px; }
+.sf-terminal-block p { margin: 3px 0; }
+.sf-terminal-block.is-error { color: var(--sf-salmon); }
+.sf-terminal-input { color: var(--sf-orange); }
+.sf-terminal-form { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 8px; padding: 10px 12px; background: var(--sf-panel-2); color: var(--sf-orange); font-family: "Cascadia Mono", Consolas, monospace; }
+.sf-terminal-form input { padding: 8px; border: 0; background: #080a12; color: #b8e8d0; font-family: inherit; }
+.sf-terminal-form button { padding: 8px 16px; border-radius: 16px; background: var(--sf-orange); color: #111; cursor: pointer; }
+.sf-search-result { display: flex; flex-direction: column; width: 100%; margin: 7px 0; padding: 10px; border-left: 5px solid var(--sf-lilac) !important; background: #11182a; text-align: left; cursor: pointer; }
+.sf-search-result span { color: var(--sf-orange); }
+.sf-search-result small { color: #aeb5c9; }
 .sf-alert { color: var(--sf-salmon); font-weight: 700; }
 .sf-empty, .sf-state { color: #aeb5c9; text-align: center; }
 .sf-state { display: grid; place-content: center; min-height: 100%; }
@@ -116,4 +141,7 @@
   .sf-browser__list { max-height: 210px; }
   .sf-composer { grid-template-columns: 1fr; }
   .sf-composer__wide { grid-column: auto; }
+  .sf-astro-filters { grid-template-columns: 1fr 1fr; }
+  .sf-astro-browser { grid-template-columns: 1fr; }
+  .sf-system-list { max-height: 210px; }
 }

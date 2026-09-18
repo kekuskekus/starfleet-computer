@@ -26,6 +26,12 @@ export class StarfleetComputerApp extends HandlebarsApplicationMixin(Application
       toggleComposer: StarfleetComputerApp.toggleComposerAction,
       createMessage: StarfleetComputerApp.createMessageAction,
       openAttachment: StarfleetComputerApp.openAttachmentAction,
+      applyAstrometricsFilters: StarfleetComputerApp.applyAstrometricsFiltersAction,
+      resetAstrometricsFilters: StarfleetComputerApp.resetAstrometricsFiltersAction,
+      selectSystem: StarfleetComputerApp.selectSystemAction,
+      openScene: StarfleetComputerApp.openSceneAction,
+      runCommand: StarfleetComputerApp.runCommandAction,
+      openSearchResult: StarfleetComputerApp.openSearchResultAction,
       openDocument: StarfleetComputerApp.openDocumentAction,
       openCharacterSheet: StarfleetComputerApp.openCharacterSheetAction,
       openStarSystem: StarfleetComputerApp.openStarSystemAction,
@@ -39,7 +45,7 @@ export class StarfleetComputerApp extends HandlebarsApplicationMixin(Application
     content: { template: `modules/${MODULE_ID}/templates/computer.hbs` }
   };
 
-  constructor({ registry, dataService, permissionService, documentResolver, toolkitAdapter, communicationService } = {}, options = {}) {
+  constructor({ registry, dataService, permissionService, documentResolver, toolkitAdapter, communicationService, astrometricsService, searchService, commandRegistry } = {}, options = {}) {
     super(options);
     this.registry = registry;
     this.dataService = dataService;
@@ -47,11 +53,27 @@ export class StarfleetComputerApp extends HandlebarsApplicationMixin(Application
     this.documents = documentResolver;
     this.toolkit = toolkitAdapter;
     this.communications = communicationService;
+    this.astrometrics = astrometricsService;
+    this.search = searchService;
+    this.commands = commandRegistry;
     this.activeAppId = APP_IDS.HOME;
     this.history = [];
     this.selectedId = null;
     this.loading = false;
     this.showComposer = false;
+    this.appState = new Map();
+  }
+
+  stateFor(appId) {
+    if (!this.appState.has(appId)) {
+      const initial = appId === APP_IDS.ASTROMETRICS
+        ? { filters: { query: "", sector: "", region: "", affiliation: "", travelCode: "" } }
+        : appId === APP_IDS.COMPUTER
+          ? { history: [{ input: "", lines: [game.i18n.localize("STARFLEET.Terminal.Ready")], results: [] }] }
+          : {};
+      this.appState.set(appId, initial);
+    }
+    return this.appState.get(appId);
   }
 
   async _prepareContext(options) {
@@ -66,8 +88,12 @@ export class StarfleetComputerApp extends HandlebarsApplicationMixin(Application
               data: this.dataService,
               toolkit: this.toolkit,
               communications: this.communications,
+              astrometrics: this.astrometrics,
+              search: this.search,
+              commands: this.commands,
               registry: this.registry,
-              selectedId: this.selectedId
+              selectedId: this.selectedId,
+              state: this.stateFor(activeApp.id)
             })
           : {
               view: activeApp?.id === APP_IDS.ASTROMETRICS ? "astrometrics" : "empty",
@@ -83,13 +109,6 @@ export class StarfleetComputerApp extends HandlebarsApplicationMixin(Application
       appContext.selected = appContext.entries.find(entry =>
         entry.id === this.selectedId || entry.uuid === this.selectedId
       ) ?? null;
-    }
-
-    if (appContext.view === "astrometrics" && this.selectedId) {
-      const system = this.toolkit.getStarSystems({ permissionService: this.permissions })
-        .find(entry => entry.actorId === this.selectedId || entry.uuid === this.selectedId);
-      appContext.selected = system ?? null;
-      appContext.systemSceneAvailable = Boolean(system && this.toolkit.getMainSystemScene(system.actorId));
     }
 
     if (appContext.view === "comms") appContext.showComposer = this.showComposer;
@@ -122,6 +141,18 @@ export class StarfleetComputerApp extends HandlebarsApplicationMixin(Application
 
   async renderParts(parts = ["header", "navigation", "content"]) {
     return this.render({ parts });
+  }
+
+  _onRender(context, options) {
+    super._onRender(context, options);
+    for (const form of this.element.querySelectorAll(".sf-terminal-form, .sf-astro-filters")) {
+      form.addEventListener("submit", event => {
+        event.preventDefault();
+        form.querySelector("[data-submit-action]")?.click();
+      });
+    }
+    const terminal = this.element.querySelector(".sf-terminal-output");
+    if (terminal) terminal.scrollTop = terminal.scrollHeight;
   }
 
   async navigate(id, { selectedId = null, remember = true } = {}) {
@@ -213,6 +244,94 @@ export class StarfleetComputerApp extends HandlebarsApplicationMixin(Application
       return;
     }
     document.sheet?.render(true);
+  }
+
+  static applyAstrometricsFiltersAction(event, target) {
+    event.preventDefault();
+    const form = target.closest("form");
+    if (!form) return;
+    const values = Object.fromEntries(new FormData(form).entries());
+    this.stateFor(APP_IDS.ASTROMETRICS).filters = {
+      query: String(values.query ?? "").trim(),
+      sector: values.sector ?? "",
+      region: values.region ?? "",
+      affiliation: values.affiliation ?? "",
+      travelCode: values.travelCode ?? ""
+    };
+    return this.renderParts(["content"]);
+  }
+
+  static resetAstrometricsFiltersAction() {
+    this.stateFor(APP_IDS.ASTROMETRICS).filters = { query: "", sector: "", region: "", affiliation: "", travelCode: "" };
+    return this.renderParts(["content"]);
+  }
+
+  static selectSystemAction(_event, target) {
+    this.selectedId = target.dataset.actorId;
+    return this.renderParts(["content"]);
+  }
+
+  static async openSceneAction(_event, target) {
+    const scene = await this.documents.resolve(target.dataset.uuid);
+    if (!scene) {
+      ui.notifications.warn(game.i18n.localize("STARFLEET.Astrometrics.SceneUnavailable"));
+      return;
+    }
+    if (typeof scene.view === "function") await scene.view();
+    else scene.sheet?.render(true);
+  }
+
+  async openResult(result) {
+    if (!result) return;
+    if (result.type === "star-system") {
+      await this.navigate(APP_IDS.ASTROMETRICS, { selectedId: result.actorId || result.id });
+      return;
+    }
+    if (result.type === "communication") {
+      await this.communications.markRead(result.uuid);
+    }
+    if (result.appId && this.registry.get(result.appId)) {
+      await this.navigate(result.appId, { selectedId: result.id });
+      return;
+    }
+    await this.documents.open(result.uuid);
+  }
+
+  static async runCommandAction(event, target) {
+    event.preventDefault();
+    const form = target.closest("form");
+    const input = form?.elements?.command?.value?.trim();
+    if (!input) return;
+    const state = this.stateFor(APP_IDS.COMPUTER);
+    try {
+      const result = await this.commands.execute(input, { search: this.search });
+      if (result.clear) state.history = [];
+      else state.history.push({ input, lines: result.lines ?? [], results: result.results ?? [] });
+      state.history = state.history.slice(-50);
+      if (result.navigate) {
+        await this.navigate(result.navigate);
+        return;
+      }
+      if (result.autoOpen) {
+        await this.openResult(result.autoOpen);
+        return;
+      }
+      await this.renderParts(["content"]);
+    } catch (error) {
+      console.error(`${MODULE_ID} | Command failed`, error);
+      state.history.push({ input, lines: [error?.message || String(error)], results: [], error: true });
+      await this.renderParts(["content"]);
+    }
+  }
+
+  static openSearchResultAction(_event, target) {
+    return this.openResult({
+      id: target.dataset.id,
+      actorId: target.dataset.actorId,
+      uuid: target.dataset.uuid,
+      type: target.dataset.type,
+      appId: target.dataset.appId || null
+    });
   }
 
   static openDocumentAction(_event, target) {

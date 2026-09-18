@@ -2,17 +2,19 @@
 
 LCARS-style player interface for a Foundry VTT v14 Star Trek Adventures 2e world. It uses Foundry Journals and Actors as canonical content and discovers existing `sta2e-toolkit` Star System Actors and generated Scenes instead of duplicating them.
 
-This release implements SC-01 through SC-05:
+This release implements SC-01 through SC-07:
 
 - a resizable `ApplicationV2` shell with one instance per client;
 - Home, persistent navigation, status, user, world and Toolkit stardate display;
 - permission-filtered data services for Journals, Journal pages, Actors, Folders and Scenes;
 - Ship Logs, Database, Crew and filesystem-style Files applications;
 - persistent Communications with GM authoring, private recipients, unread state and UUID attachments;
+- Astrometrics discovery, filtering and navigation over Toolkit Star System Actors and generated Scenes;
+- permission-filtered local search and an extensible command terminal;
 - a dedicated `Sta2eToolkitAdapter` for Star System discovery and public Toolkit actions;
 - public API for opening the Computer and registering additional applications.
 
-The full Astrometrics browser and Computer Search remain visible in the shell for later SC tasks. Database Star System records and Communication attachments already route through the adapter to the Toolkit record and existing system Scene.
+No orbital renderer or parallel Star System model is included. Toolkit Star System Actors and their existing generated Scenes remain canonical.
 
 ## Install
 
@@ -91,7 +93,37 @@ api.registerComputerApp({
     return { view: "empty", emptyMessage: "Science station ready." };
   }
 });
+
+api.registerCommand({
+  id: "status",
+  description: "Show ship status",
+  async execute() {
+    return { lines: ["ALL SYSTEMS NOMINAL"] };
+  }
+});
 ```
+
+## Astrometrics
+
+Astrometrics automatically lists permitted Actors whose `flags["sta2e-toolkit"].starSystem.isStarSystem` value is true. It can filter by sector, region, affiliation and travel code, and searches system metadata and world names. Actions open the Toolkit Star System sheet, the existing full-system Scene, or existing planetary overview Scenes. The module never generates or redraws planets and orbits.
+
+## Computer terminal
+
+The terminal indexes only documents the current user can observe: Journal titles and page text, Actors, Computer categories/tags/paths, and Toolkit Star System metadata. Supported commands:
+
+```text
+help
+home
+clear
+search <query>
+open <path>
+logs <query>
+crew <query>
+map <query>
+system <query>
+```
+
+Unrecognized natural-language input is treated as a search query. Search results open the corresponding Computer application; Star Systems open in Astrometrics.
 
 ## Development checks
 

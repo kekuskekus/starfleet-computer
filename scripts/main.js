@@ -5,8 +5,12 @@ import { PermissionService } from "./services/PermissionService.js";
 import { DocumentResolver } from "./services/DocumentResolver.js";
 import { ComputerDataService } from "./services/ComputerDataService.js";
 import { CommunicationService } from "./services/CommunicationService.js";
+import { AstrometricsService } from "./services/AstrometricsService.js";
+import { SearchService } from "./services/SearchService.js";
 import { ComputerAppRegistry } from "./apps/ComputerAppRegistry.js";
+import { CommandRegistry } from "./apps/CommandRegistry.js";
 import { registerBuiltins } from "./apps/registerBuiltins.js";
+import { registerCommands } from "./apps/registerCommands.js";
 import { StarfleetComputerApp } from "./apps/StarfleetComputerApp.js";
 import * as components from "./components.js";
 
@@ -52,6 +56,12 @@ function exposeApi() {
     closeComputer,
     toggleComputer,
     registerComputerApp,
+    registerCommand(definition) {
+      return services.commandRegistry.register(definition);
+    },
+    unregisterCommand(id) {
+      return services.commandRegistry.unregister(id);
+    },
     unregisterComputerApp(id) {
       const removed = services.registry.unregister(id);
       if (removed && computer?.rendered) computer.navigate("home", { remember: false });
@@ -59,6 +69,7 @@ function exposeApi() {
     },
     get toolkit() { return services.toolkitAdapter; },
     get communications() { return services.communicationService; },
+    get search() { return services.searchService; },
     components
   };
   const module = game.modules.get(MODULE_ID);
@@ -108,15 +119,21 @@ Hooks.once("init", () => {
   const toolkitAdapter = new Sta2eToolkitAdapter({ permissionService });
   const registry = new ComputerAppRegistry();
   registerBuiltins(registry);
+  const commandRegistry = new CommandRegistry();
+  registerCommands(commandRegistry);
   const documentResolver = new DocumentResolver(permissionService);
   const dataService = new ComputerDataService({ permissionService, toolkitAdapter });
+  const communicationService = new CommunicationService({ dataService, permissionService, documentResolver });
   services = {
     registry,
     permissionService,
     toolkitAdapter,
     documentResolver,
     dataService,
-    communicationService: new CommunicationService({ dataService, permissionService, documentResolver })
+    communicationService,
+    astrometricsService: new AstrometricsService({ toolkitAdapter, permissionService }),
+    searchService: new SearchService({ dataService, permissionService, toolkitAdapter, communicationService }),
+    commandRegistry
   };
   exposeApi();
   Hooks.on("getSceneControlButtons", addSceneControl);

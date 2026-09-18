@@ -110,11 +110,40 @@
       </div>
     </section>
   {{else if (eq content.view "astrometrics")}}
-    <section>
+    <section class="sf-astrometrics">
       <div class="sf-section-title"><span>06</span><h2>{{localize "STARFLEET.App.Astrometrics"}}</h2></div>
-      {{#with content.selected}}
-        <article class="sf-system-record"><p class="sf-kicker">{{sector}} · {{region}}</p><h2>{{designation}}</h2><dl><dt>CLASS</dt><dd>{{classification}}</dd><dt>AFFILIATION</dt><dd>{{affiliation}}</dd><dt>TRAVEL CODE</dt><dd>{{travelCode}}</dd><dt>COORDINATES</dt><dd>{{coordinates.x}} / {{coordinates.y}} / {{coordinates.z}}</dd></dl><button type="button" data-action="openStarSystem" data-actor-id="{{actorId}}">{{localize "STARFLEET.OpenSystemRecord"}}</button>{{#if ../content.systemSceneAvailable}}<button type="button" data-action="openSystemScene" data-actor-id="{{actorId}}">{{localize "STARFLEET.OpenSystemMap"}}</button>{{else}}<p class="sf-alert">{{localize "STARFLEET.State.SystemMapUnavailable"}}</p>{{/if}}</article>
-      {{else}}<p class="sf-empty">{{localize "STARFLEET.State.SelectSystem"}}</p>{{/with}}
+      <form class="sf-astro-filters">
+        <input type="search" name="query" value="{{content.filters.query}}" placeholder="{{localize 'STARFLEET.Astrometrics.Search'}}">
+        <select name="sector"><option value="">{{localize "STARFLEET.Astrometrics.AllSectors"}}</option>{{#each content.sectorOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select>
+        <select name="region"><option value="">{{localize "STARFLEET.Astrometrics.AllRegions"}}</option>{{#each content.regionOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select>
+        <select name="affiliation"><option value="">{{localize "STARFLEET.Astrometrics.AllAffiliations"}}</option>{{#each content.affiliationOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select>
+        <select name="travelCode"><option value="">{{localize "STARFLEET.Astrometrics.AllTravelCodes"}}</option>{{#each content.travelCodeOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select>
+        <button type="button" data-action="applyAstrometricsFilters" data-submit-action>{{localize "STARFLEET.Astrometrics.Apply"}}</button>
+        <button type="button" data-action="resetAstrometricsFilters">{{localize "STARFLEET.Astrometrics.Reset"}}</button>
+      </form>
+      <div class="sf-astro-browser">
+        <aside class="sf-system-list"><p class="sf-kicker">{{content.systems.length}} {{localize "STARFLEET.Astrometrics.KnownSystems"}}</p>
+          {{#each content.systems}}<button type="button" data-action="selectSystem" data-actor-id="{{actorId}}" class="sf-list-row {{#if (eq ../content.selected.actorId actorId)}}is-selected{{/if}}"><strong>{{designation}}</strong><span>{{sector}} · {{region}}</span><small>{{affiliation}} · {{travelCode}}</small></button>{{else}}<p class="sf-empty">{{localize "STARFLEET.Astrometrics.NoSystems"}}</p>{{/each}}
+        </aside>
+        {{#with content.selected}}
+          <article class="sf-system-record">
+            <p class="sf-kicker">{{sector}} · {{region}}</p><h2>{{designation}}</h2>
+            <dl><dt>{{localize "STARFLEET.Astrometrics.Class"}}</dt><dd>{{classification}}</dd><dt>{{localize "STARFLEET.Astrometrics.Affiliation"}}</dt><dd>{{affiliation}}</dd><dt>{{localize "STARFLEET.Astrometrics.TravelCode"}}</dt><dd>{{travelCode}}</dd><dt>{{localize "STARFLEET.Astrometrics.StrategicValue"}}</dt><dd>{{strategicValue}}</dd><dt>{{localize "STARFLEET.Astrometrics.PrimaryStar"}}</dt><dd>{{primaryStar}}</dd><dt>{{localize "STARFLEET.Astrometrics.StellarAge"}}</dt><dd>{{stellarAge}}</dd><dt>{{localize "STARFLEET.Astrometrics.Coordinates"}}</dt><dd>{{coordinatesLabel}}</dd></dl>
+            <div class="sf-system-actions"><button type="button" data-action="openStarSystem" data-actor-id="{{actorId}}">{{localize "STARFLEET.OpenSystemRecord"}}</button>{{#if systemScene}}<button type="button" data-action="openScene" data-uuid="{{systemScene.uuid}}">{{localize "STARFLEET.OpenSystemMap"}}</button>{{/if}}</div>
+            {{#unless systemScene}}<p class="sf-alert">{{localize "STARFLEET.State.SystemMapUnavailable"}}</p>{{#if @root.isGM}}<button type="button" data-action="openStarSystem" data-actor-id="{{actorId}}">{{localize "STARFLEET.Astrometrics.OpenEditor"}}</button>{{/if}}{{/unless}}
+            <div class="sf-system-columns"><section><h3>{{localize "STARFLEET.Astrometrics.Stars"}}</h3>{{#each starsDisplay}}<p><strong>{{name}}</strong> {{detail}}</p>{{else}}<p>—</p>{{/each}}</section><section><h3>{{localize "STARFLEET.Astrometrics.Worlds"}}</h3>{{#each worlds}}<p><strong>{{name}}</strong> {{detail}}</p>{{else}}<p>—</p>{{/each}}</section></div>
+            <section class="sf-planet-scenes"><h3>{{localize "STARFLEET.Astrometrics.PlanetaryOverviews"}}</h3>{{#each planetScenes}}<button type="button" data-action="openScene" data-uuid="{{uuid}}"><i class="fa-solid fa-globe"></i> {{worldName}}</button>{{else}}<p class="sf-empty">{{localize "STARFLEET.Astrometrics.NoPlanetaryOverviews"}}</p>{{/each}}</section>
+          </article>
+        {{else}}<p class="sf-empty">{{localize "STARFLEET.State.SelectSystem"}}</p>{{/with}}
+      </div>
+    </section>
+  {{else if (eq content.view "computer")}}
+    <section class="sf-terminal">
+      <div class="sf-section-title"><span>07</span><h2>{{localize "STARFLEET.Terminal.Title"}}</h2></div>
+      <div class="sf-terminal-output">
+        {{#each content.history}}<div class="sf-terminal-block {{#if error}}is-error{{/if}}">{{#if input}}<p class="sf-terminal-input">&gt; {{input}}</p>{{/if}}{{#each lines}}<p>{{this}}</p>{{/each}}{{#each results}}<button type="button" class="sf-search-result" data-action="openSearchResult" data-id="{{id}}" data-actor-id="{{actorId}}" data-uuid="{{uuid}}" data-type="{{type}}" data-app-id="{{appId}}"><strong>{{title}}</strong><span>{{path}}</span><small>{{excerpt}}</small></button>{{/each}}</div>{{/each}}
+      </div>
+      <form class="sf-terminal-form"><span>&gt;</span><input type="text" name="command" autocomplete="off" autofocus placeholder="{{localize 'STARFLEET.Terminal.Placeholder'}}"><button type="button" data-action="runCommand" data-submit-action>{{localize "STARFLEET.Terminal.Execute"}}</button></form>
     </section>
   {{else}}
     <section class="sf-state"><i class="fa-solid fa-circle-nodes"></i><h2>{{activeLabel}}</h2><p>{{content.emptyMessage}}</p></section>
