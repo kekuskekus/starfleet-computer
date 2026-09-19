@@ -114,11 +114,13 @@
         {{#each content.entries}}
           <article class="sf-relation-card sf-relation-card--{{tone}}">
             <header><img src="{{image}}" alt=""><div><p class="sf-kicker">{{localize "STARFLEET.Relations.Npc"}}</p><h2>{{name}}</h2></div><strong class="sf-relation-score">{{score}}</strong></header>
-            <form class="sf-relation-adjust">
-              <input type="text" name="reason" placeholder="{{localize 'STARFLEET.Relations.Reason'}}" {{#if canAdjust}}{{else}}disabled{{/if}}>
-              {{#if canDecrease}}<button type="button" data-action="adjustRelationship" data-journal-id="{{id}}" data-delta="-1" aria-label="{{localize 'STARFLEET.Relations.Decrease'}}">−</button>{{else}}<button type="button" disabled>−</button>{{/if}}
-              {{#if canIncrease}}<button type="button" data-action="adjustRelationship" data-journal-id="{{id}}" data-delta="1" aria-label="{{localize 'STARFLEET.Relations.Increase'}}">+</button>{{else}}<button type="button" disabled>+</button>{{/if}}
-            </form>
+            {{#if canAdjust}}
+              <form class="sf-relation-adjust">
+                <input type="text" name="reason" placeholder="{{localize 'STARFLEET.Relations.Reason'}}">
+                {{#if canDecrease}}<button type="button" data-action="adjustRelationship" data-journal-id="{{id}}" data-delta="-1" aria-label="{{localize 'STARFLEET.Relations.Decrease'}}">−</button>{{else}}<button type="button" disabled>−</button>{{/if}}
+                {{#if canIncrease}}<button type="button" data-action="adjustRelationship" data-journal-id="{{id}}" data-delta="1" aria-label="{{localize 'STARFLEET.Relations.Increase'}}">+</button>{{else}}<button type="button" disabled>+</button>{{/if}}
+              </form>
+            {{/if}}
             <div class="sf-relation-actions">
               <button type="button" data-action="openCharacterSheet" data-uuid="{{actorUuid}}">{{localize "STARFLEET.OpenCharacterSheet"}}</button>
               <button type="button" data-action="openDocument" data-uuid="{{uuid}}">{{localize "STARFLEET.Relations.OpenJournal"}}</button>

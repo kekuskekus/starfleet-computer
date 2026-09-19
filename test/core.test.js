@@ -122,7 +122,7 @@ test("NPC relationships create one Journal, persist reasons and clamp scores", a
     id: "npc1", uuid: "Actor.npc1", documentName: "Actor", name: "Commander Vek",
     img: "vek.webp", ownership: { default: 0 }
   };
-  globalThis.CONST = { DOCUMENT_OWNERSHIP_LEVELS: { OWNER: 3 } };
+  globalThis.CONST = { DOCUMENT_OWNERSHIP_LEVELS: { OBSERVER: 2, OWNER: 3 } };
   globalThis.game = {
     user: { id: "gm", name: "Адмирал", isGM: true },
     actors: new Map([[actor.id, actor]]),
@@ -164,13 +164,18 @@ test("NPC relationships create one Journal, persist reasons and clamp scores", a
     assert.equal(first.created, true);
     assert.equal((await service.addActor(actor.uuid)).created, false);
     assert.equal(journals.size, 1);
-    assert.equal(first.journal.ownership.default, 3);
+    assert.equal(first.journal.ownership.default, 2);
 
     const change = await service.adjust(first.journal.id, 1, "Помог <экипажу>");
     assert.equal(change.value, 1);
     assert.equal(change.entry.reason, "Помог <экипажу>");
     assert.match(first.journal.pages[0].text.content, /Помог &lt;экипажу&gt;/);
     assert.equal(service.getRelations()[0].score, 1);
+
+    globalThis.game.user = { id: "player", name: "Игрок", isGM: false };
+    assert.equal(service.canAdjust(first.journal), false);
+    await assert.rejects(service.adjust(first.journal.id, -1, "Попытка игрока"), /You cannot change/);
+    globalThis.game.user = { id: "gm", name: "Адмирал", isGM: true };
 
     first.journal.flags["starfleet-computer"].score = 20;
     assert.equal((await service.adjust(first.journal.id, 1, "beyond limit")).changed, false);
@@ -326,6 +331,46 @@ test("search normalizes Cyrillic, Russian inflections, yo/e and Journal page nam
     assert.equal((await service.search("Талвосе")).length, 1);
   } finally {
     globalThis.game = previousGame;
+  }
+});
+
+test("search indexes only Journals and pages visible to the current user", async () => {
+  const previousGame = globalThis.game;
+  const previousConst = globalThis.CONST;
+  const player = { id: "player", isGM: false };
+  const document = (id, visible, title, pageText) => ({
+    id, uuid: `JournalEntry.${id}`, name: title, folder: { id: "database" }, flags: {},
+    testUserPermission: () => visible,
+    pages: [{
+      name: `${title} page`, text: { content: `<p>${pageText}</p>` },
+      testUserPermission: () => visible
+    }]
+  });
+  globalThis.CONST = { DOCUMENT_OWNERSHIP_LEVELS: { OBSERVER: 2 } };
+  globalThis.game = {
+    user: player,
+    journal: [
+      document("visible", true, "Открытый журнал", "Доступная альфа"),
+      document("hidden", false, "Секретный журнал Омега", "Недоступная директива")
+    ],
+    actors: []
+  };
+  try {
+    const service = new SearchService({
+      dataService: {
+        configuredFolderId: key => key === SETTINGS.DATABASE_FOLDER ? "database" : "",
+        folderIds: id => new Set(id ? [id] : []),
+        isCrewActor: () => false
+      },
+      permissionService: new PermissionService(() => player),
+      toolkitAdapter: { isStarSystemActor: () => false }
+    });
+    assert.equal((await service.search("доступная альфа")).length, 1);
+    assert.equal((await service.search("секретный Омега")).length, 0);
+    assert.equal((await service.search("недоступная директива")).length, 0);
+  } finally {
+    globalThis.game = previousGame;
+    globalThis.CONST = previousConst;
   }
 });
 

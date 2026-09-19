@@ -99,7 +99,7 @@ The `actorUuid` is the stable link MCP should use. MCP may edit Journal pages wi
 
 Open **Relationships** and, as a GM, drag an NPC Actor from Foundry's Actors directory onto the drop area. The Computer creates the **NPC Relationships** Journal folder and a dedicated Journal Entry for that NPC. Dropping the same Actor again reuses the existing relationship.
 
-The score starts at `0` and is limited to `-20` through `+20`. GMs and players with owner access to the relationship Journal can press **−** or **+**. An optional reason entered before the click is stored with the old score, new score, user and timestamp, and is also written into the Journal page. The automatically created Journals grant owner access by default so the whole group can use the counter; normal Foundry Journal ownership can be tightened afterward.
+The score starts at `0` and is limited to `-20` through `+20`. Only a GM can see and use the **−** and **+** controls. An optional reason entered before the click is stored with the old score, new score, user and timestamp, and is also written into the Journal page. Automatically created Journals grant observer access by default so players can view the relationship history without changing it; normal Foundry Journal ownership can be tightened afterward.
 
 Relationship records use stable module flags so MCP can find and update them:
 
@@ -119,6 +119,8 @@ Relationship records use stable module flags so MCP can find and update them:
 ```
 
 Preserve `app`, `actorUuid` and `actorId` when updating these Journals through MCP. The relationship tab and local search read the current flags and Journal page on refresh.
+
+Search indexes only Journals, Journal pages and Actors that the current Foundry user can observe. Removing a user's observer permission from a relationship Journal also removes it and its page text from that user's search results.
 
 ## Communications
 

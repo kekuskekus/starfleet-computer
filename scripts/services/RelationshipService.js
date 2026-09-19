@@ -113,8 +113,8 @@ export class RelationshipService {
     const existing = this.findByActorUuid(actor.uuid);
     if (existing) return { journal: existing, created: false };
     const folder = await this.ensureFolder();
-    const owner = globalThis.CONST?.DOCUMENT_OWNERSHIP_LEVELS?.OWNER ?? 3;
-    const ownership = { ...(actor.ownership ?? {}), default: owner };
+    const observer = globalThis.CONST?.DOCUMENT_OWNERSHIP_LEVELS?.OBSERVER ?? 2;
+    const ownership = { ...(actor.ownership ?? {}), default: observer };
     const title = `${localize("STARFLEET.Relations.JournalTitle", "Relationship")} — ${actor.name}`;
     const journal = await this.journalCreator({
       name: title,
@@ -142,12 +142,8 @@ export class RelationshipService {
     return { journal, created: true };
   }
 
-  canAdjust(journal, user = game.user) {
-    if (user?.isGM) return true;
-    const owner = globalThis.CONST?.DOCUMENT_OWNERSHIP_LEVELS?.OWNER ?? 3;
-    if (typeof journal?.testUserPermission === "function") return journal.testUserPermission(user, owner, { exact: false });
-    const ownership = journal?.ownership ?? {};
-    return (ownership[user?.id] ?? ownership.default ?? 0) >= owner;
+  canAdjust(_journal, user = game.user) {
+    return user?.isGM === true;
   }
 
   async adjust(journalId, delta, reason = "") {
