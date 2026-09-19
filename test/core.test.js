@@ -6,7 +6,7 @@ import { PermissionService } from "../scripts/services/PermissionService.js";
 import { Sta2eToolkitAdapter } from "../scripts/adapters/Sta2eToolkitAdapter.js";
 import { CommunicationService, messageMatchesAudience, normalizeRecipient, normalizeRecipients } from "../scripts/services/CommunicationService.js";
 import { AstrometricsService } from "../scripts/services/AstrometricsService.js";
-import { SearchService, plainText, searchTerms } from "../scripts/services/SearchService.js";
+import { SearchService, normalizeSearchText, plainText, searchTerms } from "../scripts/services/SearchService.js";
 import { CommandRegistry } from "../scripts/apps/CommandRegistry.js";
 import { registerCommands } from "../scripts/apps/registerCommands.js";
 import { ComputerDataService } from "../scripts/services/ComputerDataService.js";
@@ -203,6 +203,51 @@ test("terminal commands support natural search, map aliases and exact paths", as
   assert.equal(map.autoOpen.actorId, "a1");
   const open = await registry.execute(`open ${talvos.path}`, { search });
   assert.equal(open.autoOpen.path, talvos.path);
+});
+
+test("Russian commands cover navigation and pass Cyrillic queries to search", async () => {
+  const registry = new CommandRegistry();
+  registerCommands(registry);
+  for (const [alias, id] of [
+    ["помощь", "help"], ["главная", "home"], ["очистить", "clear"], ["поиск", "search"],
+    ["открыть", "open"], ["журналы", "logs"], ["база", "database"], ["экипаж", "crew"],
+    ["файлы", "files"], ["связь", "comms"], ["астрометрика", "astrometrics"], ["карта", "system"]
+  ]) assert.equal(registry.get(alias)?.id, id);
+
+  let received = "";
+  const result = await registry.execute("поиск временной аномалии", {
+    search: { search: async query => { received = query; return []; } }
+  });
+  assert.equal(received, "временной аномалии");
+  assert.deepEqual(result.results, []);
+  assert.equal((await registry.execute("файлы", { search: {} })).navigate, "files");
+});
+
+test("search normalizes Cyrillic, Russian inflections, yo/e and Journal page names", async () => {
+  const previousGame = globalThis.game;
+  const entry = {
+    id: "ru1", uuid: "JournalEntry.ru1", name: "Исследования Талвоса", folder: { id: "database" }, flags: {},
+    pages: [{ name: "Звёздные явления", text: { content: "<p>Обнаружена временная аномалия.</p>" } }]
+  };
+  globalThis.game = { journal: [entry], actors: [] };
+  try {
+    const service = new SearchService({
+      dataService: {
+        configuredFolderId: key => key === SETTINGS.DATABASE_FOLDER ? "database" : "",
+        folderIds: id => new Set(id ? [id] : []),
+        isCrewActor: () => false
+      },
+      permissionService: { filter: documents => Array.from(documents ?? []) },
+      toolkitAdapter: { isStarSystemActor: () => false }
+    });
+    assert.equal(normalizeSearchText("ЗВЁЗДНЫЙ"), "звездный");
+    assert.deepEqual(searchTerms("Что известно о звёздной аномалии?"), ["звездной", "аномалии"]);
+    assert.equal((await service.search("звездные явления")).length, 1);
+    assert.equal((await service.search("временной аномалии")).length, 1);
+    assert.equal((await service.search("Талвосе")).length, 1);
+  } finally {
+    globalThis.game = previousGame;
+  }
 });
 
 test("local search excludes communications not addressed to the current user", async () => {

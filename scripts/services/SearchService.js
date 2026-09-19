@@ -3,7 +3,7 @@ import { CREW_JOURNAL_APP } from "./CrewJournalService.js";
 
 const STOP_WORDS = new Set([
   "the", "and", "what", "where", "when", "who", "how", "about", "know", "with", "from", "that", "this", "are", "our",
-  "что", "где", "когда", "кто", "как", "про", "нам", "мы", "знаем", "из", "это", "или", "для"
+  "что", "где", "когда", "кто", "как", "про", "нам", "мы", "знаем", "известно", "расскажи", "покажи", "найди", "из", "это", "или", "для"
 ]);
 
 function collectionValues(collection) {
@@ -20,10 +20,20 @@ export function plainText(html = "") {
     .replace(/<[^>]+>/g, " ").replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim();
 }
 
+export function normalizeSearchText(value = "") {
+  return String(value).normalize("NFKC").toLocaleLowerCase().replace(/ё/g, "е");
+}
+
 export function searchTerms(query) {
-  const terms = String(query ?? "").toLocaleLowerCase().match(/[\p{L}\p{N}]+/gu) ?? [];
+  const terms = normalizeSearchText(query).match(/[\p{L}\p{N}]+/gu) ?? [];
   const useful = terms.filter(term => term.length > 2 && !STOP_WORDS.has(term));
   return useful.length ? useful : terms.filter(term => term.length > 1);
+}
+
+function includesSearchTerm(haystack, term) {
+  if (haystack.includes(term)) return true;
+  if (/^[а-я]+$/u.test(term) && term.length >= 5) return haystack.includes(term.slice(0, -2));
+  return false;
 }
 
 function slug(value) {
@@ -68,6 +78,7 @@ export class SearchService {
       if (appId === APP_IDS.COMMS && this.communications && !this.communications.isAddressedTo(entry)) continue;
       const pages = this.permissions.filter(entry.pages);
       const pageText = pages.map(page => plainText(page.text?.content ?? "")).join(" ");
+      const pageNames = pages.map(page => page.name ?? "").join(" ");
       const tags = Array.isArray(flags.tags) ? flags.tags.join(" ") : flags.tags ?? "";
       const path = flags.terminalPath || `/${appId || "records"}/${slug(entry.name)}`;
       records.push({
@@ -77,7 +88,7 @@ export class SearchService {
         appId,
         title: entry.name,
         path,
-        text: [entry.name, pageText, flags.category, tags, path].filter(Boolean).join(" "),
+        text: [entry.name, pageNames, pageText, flags.category, tags, path].filter(Boolean).join(" "),
         excerpt: pageText.slice(0, 220)
       });
     }
@@ -118,14 +129,14 @@ export class SearchService {
       .filter(record => !types.length || types.includes(record.type))
       .filter(record => !appIds.length || appIds.includes(record.appId))
       .map(record => {
-        const title = record.title.toLocaleLowerCase();
-        const path = record.path.toLocaleLowerCase();
-        const text = record.text.toLocaleLowerCase();
+        const title = normalizeSearchText(record.title);
+        const path = normalizeSearchText(record.path);
+        const text = normalizeSearchText(record.text);
         let score = 0;
         for (const term of terms) {
-          if (title.includes(term)) score += 8;
-          if (path.includes(term)) score += 4;
-          if (text.includes(term)) score += 1;
+          if (includesSearchTerm(title, term)) score += 8;
+          if (includesSearchTerm(path, term)) score += 4;
+          if (includesSearchTerm(text, term)) score += 1;
         }
         return { ...record, score };
       })
@@ -135,7 +146,7 @@ export class SearchService {
   }
 
   async resolvePath(path) {
-    const normalized = String(path ?? "").replace(/\/+$/, "").toLocaleLowerCase();
-    return (await this.buildIndex()).find(record => record.path.replace(/\/+$/, "").toLocaleLowerCase() === normalized) ?? null;
+    const normalized = normalizeSearchText(String(path ?? "").replace(/\/+$/, ""));
+    return (await this.buildIndex()).find(record => normalizeSearchText(record.path.replace(/\/+$/, "")) === normalized) ?? null;
   }
 }

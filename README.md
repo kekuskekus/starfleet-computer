@@ -149,18 +149,21 @@ Astrometrics automatically lists permitted Actors whose `flags["sta2e-toolkit"].
 The terminal indexes only documents the current user can observe: Journal titles and page text, Actors, Computer categories/tags/paths, and Toolkit Star System metadata. Supported commands:
 
 ```text
-help
-home
-clear
-search <query>
-open <path>
-logs <query>
-crew <query>
-map <query>
-system <query>
+help / помощь / справка / команды
+home / главная / домой
+clear / очистить
+search / поиск / найти <query>
+open / открыть <path>
+logs / журналы / логи [query]
+database / база / данные [query]
+crew / экипаж [query]
+files / файлы [query]
+comms / связь / сообщения [query]
+astrometrics / астрометрика
+map / system / карта / система [query]
 ```
 
-Unrecognized natural-language input is treated as a search query. Search results open the corresponding Computer application; Star Systems open in Astrometrics.
+Commands without a query open their corresponding application. Unrecognized Russian or English natural-language input is treated as a search query. Search is Unicode-aware, treats `ё` and `е` as equivalent, and uses a conservative prefix match for common Russian word endings. Search results open the corresponding Computer application; Star Systems open in Astrometrics.
 
 ## Development checks
 
