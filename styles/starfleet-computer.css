@@ -72,6 +72,14 @@
 .sf-crew-card small { color: #b9bfd0; margin-top: 4px; }
 .sf-profile { display: grid; grid-template-columns: 160px 1fr; gap: 20px; margin-top: 18px; }
 .sf-profile > img { width: 160px; height: 190px; object-fit: cover; border-radius: 24px 4px; }
+.sf-crew-config { display: grid; grid-template-columns: minmax(240px, 1fr) auto auto; align-items: end; gap: 8px; margin-bottom: 14px; padding: 12px; border-radius: 4px 18px; background: var(--sf-panel); }
+.sf-crew-config label { display: flex; flex-direction: column; gap: 5px; color: var(--sf-lilac); font-size: .75rem; text-transform: uppercase; }
+.sf-crew-config select { min-width: 0; padding: 8px; border: 1px solid #535d7d; background: #080a12; color: var(--sf-text); }
+.sf-crew-config button, .sf-crew-tabs button, .sf-crew-journals .sf-viewer button { padding: 8px 14px; border-radius: 16px; background: var(--sf-orange); color: #111; cursor: pointer; }
+.sf-crew-tabs { display: flex; gap: 8px; margin-bottom: 14px; }
+.sf-crew-tabs button { background: var(--sf-blue); }
+.sf-crew-tabs button.is-active { background: var(--sf-cream); }
+.sf-crew-journals { min-height: 390px; }
 .sf-files { display: flex; flex-direction: column; gap: 7px; }
 .sf-file-row { display: grid; grid-template-columns: minmax(180px, 35%) 1fr; flex-direction: initial; }
 .sf-file-row code { color: var(--sf-orange); }
@@ -174,6 +182,7 @@
   .sf-browser { grid-template-columns: 1fr; }
   .sf-browser__list { max-height: 210px; }
   .sf-composer { grid-template-columns: 1fr; }
+  .sf-crew-config { grid-template-columns: 1fr; }
   .sf-composer__wide { grid-column: auto; }
   .sf-astro-filters { grid-template-columns: 1fr 1fr; }
   .sf-astro-browser { grid-template-columns: 1fr; }

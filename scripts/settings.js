@@ -10,6 +10,23 @@ export function registerSettings() {
     default: true
   });
 
+  game.settings.register(MODULE_ID, SETTINGS.CREW_FOLDER, {
+    name: "STARFLEET.Settings.CrewFolder.Name",
+    hint: "STARFLEET.Settings.CrewFolder.Hint",
+    scope: "world",
+    config: true,
+    type: String,
+    default: "",
+    onChange: () => Hooks.callAll(`${MODULE_ID}.crewFolderChanged`)
+  });
+
+  game.settings.register(MODULE_ID, SETTINGS.CREW_JOURNALS_FOLDER, {
+    scope: "world",
+    config: false,
+    type: String,
+    default: ""
+  });
+
   const folders = [
     [SETTINGS.LOGS_FOLDER, "LogsFolder"],
     [SETTINGS.DATABASE_FOLDER, "DatabaseFolder"],

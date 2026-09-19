@@ -1,4 +1,5 @@
 import { APP_IDS, MODULE_ID, SETTINGS } from "../constants.js";
+import { CREW_JOURNAL_APP } from "./CrewJournalService.js";
 
 const STOP_WORDS = new Set([
   "the", "and", "what", "where", "when", "who", "how", "about", "know", "with", "from", "that", "this", "are", "our",
@@ -62,7 +63,8 @@ export class SearchService {
       const folderId = entry.folder?.id ?? entry.folder;
       const configuredApp = folderApps.find(item => item.folderIds.has(folderId))?.appId ?? null;
       const flaggedApp = Object.values(APP_IDS).includes(flags.app) ? flags.app : null;
-      const appId = flaggedApp || configuredApp;
+      const isCrewJournal = flags.app === CREW_JOURNAL_APP;
+      const appId = isCrewJournal ? APP_IDS.CREW : flaggedApp || configuredApp;
       if (appId === APP_IDS.COMMS && this.communications && !this.communications.isAddressedTo(entry)) continue;
       const pages = this.permissions.filter(entry.pages);
       const pageText = pages.map(page => plainText(page.text?.content ?? "")).join(" ");
@@ -71,7 +73,7 @@ export class SearchService {
       records.push({
         id: entry.id,
         uuid: entry.uuid,
-        type: appId === APP_IDS.LOGS ? "log" : appId === APP_IDS.FILES ? "file" : appId === APP_IDS.COMMS ? "communication" : "journal",
+        type: isCrewJournal ? CREW_JOURNAL_APP : appId === APP_IDS.LOGS ? "log" : appId === APP_IDS.FILES ? "file" : appId === APP_IDS.COMMS ? "communication" : "journal",
         appId,
         title: entry.name,
         path,
@@ -94,7 +96,7 @@ export class SearchService {
         continue;
       }
       const flags = flagsFor(actor);
-      const isCrew = flags.app === APP_IDS.CREW || actor.hasPlayerOwner || actor.type === "character";
+      const isCrew = this.data.isCrewActor?.(actor) === true;
       const appId = flags.app === APP_IDS.DATABASE ? APP_IDS.DATABASE : isCrew ? APP_IDS.CREW : null;
       const description = plainText(actor.system?.description?.value ?? actor.system?.biography?.value ?? actor.system?.biography ?? actor.system?.notes ?? "");
       const path = flags.terminalPath || `/${appId}/${slug(actor.name)}`;

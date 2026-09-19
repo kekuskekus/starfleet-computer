@@ -5,6 +5,7 @@ import { PermissionService } from "./services/PermissionService.js";
 import { DocumentResolver } from "./services/DocumentResolver.js";
 import { ComputerDataService } from "./services/ComputerDataService.js";
 import { CommunicationService } from "./services/CommunicationService.js";
+import { CrewJournalService } from "./services/CrewJournalService.js";
 import { AstrometricsService } from "./services/AstrometricsService.js";
 import { SearchService } from "./services/SearchService.js";
 import { ComputerAppRegistry } from "./apps/ComputerAppRegistry.js";
@@ -17,6 +18,7 @@ let computer = null;
 let ComputerAppClass = null;
 let services = null;
 let refreshTimer = null;
+let crewSyncTimer = null;
 
 function playerAccessAllowed() {
   return game.user?.isGM || getSetting(SETTINGS.PLAYER_ACCESS);
@@ -82,7 +84,11 @@ function exposeApi() {
     },
     get toolkit() { return services.toolkitAdapter; },
     get communications() { return services.communicationService; },
+    get crewJournals() { return services.crewJournalService; },
     get search() { return services.searchService; },
+    syncCrewJournals() {
+      return services.crewJournalService.sync();
+    },
     components
   };
   const module = game.modules.get(MODULE_ID);
@@ -97,6 +103,20 @@ function queueComputerRefresh() {
     refreshTimer = null;
     computer?.renderParts().catch(error => console.error(`${MODULE_ID} | Refresh failed`, error));
   }, 75);
+}
+
+function queueCrewJournalSync() {
+  if (!game.user?.isGM || !services?.crewJournalService) return;
+  if (crewSyncTimer) clearTimeout(crewSyncTimer);
+  crewSyncTimer = setTimeout(async () => {
+    crewSyncTimer = null;
+    try {
+      await services.crewJournalService.sync();
+      queueComputerRefresh();
+    } catch (error) {
+      console.error(`${MODULE_ID} | Crew journal synchronization failed`, error);
+    }
+  }, 150);
 }
 
 function addJournalDirectoryButton(_app, html) {
@@ -135,6 +155,7 @@ Hooks.once("init", () => {
   const documentResolver = new DocumentResolver(permissionService);
   const dataService = new ComputerDataService({ permissionService, toolkitAdapter });
   const communicationService = new CommunicationService({ dataService, permissionService, documentResolver });
+  const crewJournalService = new CrewJournalService({ dataService, permissionService });
   services = {
     registry,
     permissionService,
@@ -142,6 +163,7 @@ Hooks.once("init", () => {
     documentResolver,
     dataService,
     communicationService,
+    crewJournalService,
     astrometricsService: new AstrometricsService({ toolkitAdapter, permissionService }),
     searchService: new SearchService({ dataService, permissionService, toolkitAdapter, communicationService }),
     commandRegistry
@@ -155,7 +177,11 @@ Hooks.once("init", () => {
   Hooks.on("updateUser", (user) => {
     if (user.id === game.user?.id) queueComputerRefresh();
   });
+  for (const hook of ["createActor", "updateActor", "deleteActor"]) Hooks.on(hook, queueCrewJournalSync);
+  Hooks.on(`${MODULE_ID}.crewFolderChanged`, queueCrewJournalSync);
 });
+
+Hooks.once("ready", queueCrewJournalSync);
 
 Hooks.on("closeStarfleetComputerApp", () => {
   computer = null;

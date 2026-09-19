@@ -125,13 +125,45 @@ export class ComputerDataService {
     return [...journals, ...systems, ...actors].sort((a, b) => a.category.localeCompare(b.category) || a.title.localeCompare(b.title));
   }
 
-  getCrew() {
-    return this.permissions.filter(game.actors)
+  getCrewActors({ permitted = true } = {}) {
+    const folderId = this.configuredFolderId(SETTINGS.CREW_FOLDER);
+    const folderIds = this.folderIds(folderId, "Actor");
+    if (!folderIds.size) return [];
+    const actors = permitted ? this.permissions.filter(game.actors) : collectionValues(game.actors);
+    return actors
       .filter(actor => !this.toolkit.isStarSystemActor(actor))
-      .filter(actor => {
-        const flags = getComputerFlags(actor);
-        return flags.app === "crew" || actor.hasPlayerOwner || actor.type === "character";
-      })
+      .filter(actor => folderIds.has(actor.folder?.id ?? actor.folder));
+  }
+
+  isCrewActor(actor) {
+    if (!actor || this.toolkit.isStarSystemActor(actor)) return false;
+    const folderIds = this.folderIds(this.configuredFolderId(SETTINGS.CREW_FOLDER), "Actor");
+    return folderIds.has(actor.folder?.id ?? actor.folder);
+  }
+
+  getCrewFolderOptions() {
+    const selectedId = this.configuredFolderId(SETTINGS.CREW_FOLDER);
+    const folders = collectionValues(game.folders).filter(folder => folder.type === "Actor");
+    const byId = new Map(folders.map(folder => [folder.id, folder]));
+    const pathFor = folder => {
+      const names = [folder.name];
+      const visited = new Set([folder.id]);
+      let parentId = folder.folder?.id ?? folder.parent?.id ?? folder.folder ?? null;
+      while (parentId && byId.has(parentId) && !visited.has(parentId)) {
+        visited.add(parentId);
+        const parent = byId.get(parentId);
+        names.unshift(parent.name);
+        parentId = parent.folder?.id ?? parent.parent?.id ?? parent.folder ?? null;
+      }
+      return names.join(" / ");
+    };
+    return folders
+      .map(folder => ({ value: folder.id, label: pathFor(folder), selected: folder.id === selectedId }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+  }
+
+  getCrew() {
+    return this.getCrewActors()
       .map(actor => {
         const flags = getComputerFlags(actor);
         const description = getProperty(actor, ["system.description.value", "system.biography.value", "system.biography", "system.notes"], "");

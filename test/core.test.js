@@ -9,6 +9,9 @@ import { AstrometricsService } from "../scripts/services/AstrometricsService.js"
 import { SearchService, plainText, searchTerms } from "../scripts/services/SearchService.js";
 import { CommandRegistry } from "../scripts/apps/CommandRegistry.js";
 import { registerCommands } from "../scripts/apps/registerCommands.js";
+import { ComputerDataService } from "../scripts/services/ComputerDataService.js";
+import { CrewJournalService } from "../scripts/services/CrewJournalService.js";
+import { SETTINGS } from "../scripts/constants.js";
 
 test("manifest keeps STA2e Toolkit optional and supports Foundry 13 through 14", () => {
   const manifest = JSON.parse(readFileSync(new URL("../module.json", import.meta.url), "utf8"));
@@ -43,6 +46,69 @@ test("permissions honor GM access and observer ownership", () => {
   assert.equal(service.canView({ ownership: { default: 0 } }), false);
   assert.equal(service.canView({ ownership: {}, testUserPermission: () => true }), true);
   assert.equal(service.canView({ ownership: {} }, { id: "gm", isGM: true }), true);
+});
+
+test("Crew contains only permitted Actors in the configured folder tree", () => {
+  const previousGame = globalThis.game;
+  const root = { id: "crew-root", name: "Crew", type: "Actor", folder: null };
+  const child = { id: "bridge", name: "Bridge", type: "Actor", folder: { id: root.id } };
+  const actor = (id, folder) => ({ id, uuid: `Actor.${id}`, name: id, folder, img: `${id}.webp`, system: {} });
+  globalThis.game = {
+    folders: [root, child, { id: "other", name: "Other", type: "Actor", folder: null }],
+    actors: [actor("captain", child), actor("engineer", root), actor("visitor", { id: "other" })]
+  };
+  try {
+    const service = new ComputerDataService({
+      permissionService: { filter: documents => Array.from(documents ?? []) },
+      toolkitAdapter: { isStarSystemActor: () => false },
+      settingProvider: key => key === SETTINGS.CREW_FOLDER ? root.id : ""
+    });
+    assert.deepEqual(service.getCrew().map(entry => entry.id), ["captain", "engineer"]);
+    assert.equal(service.isCrewActor(globalThis.game.actors[2]), false);
+  } finally {
+    globalThis.game = previousGame;
+  }
+});
+
+test("Crew journal synchronization creates stable Foundry records without replacing them", async () => {
+  const previousGame = globalThis.game;
+  const settings = new Map([[SETTINGS.CREW_FOLDER, "crew-root"], [SETTINGS.CREW_JOURNALS_FOLDER, ""]]);
+  const actors = [
+    { id: "a1", uuid: "Actor.a1", name: "Asha", ownership: { default: 0, u1: 2 } },
+    { id: "a2", uuid: "Actor.a2", name: "T'Len", ownership: { default: 0, u2: 2 } }
+  ];
+  globalThis.game = { user: { isGM: true }, folders: [], journal: [] };
+  try {
+    const service = new CrewJournalService({
+      dataService: {
+        configuredFolderId: key => settings.get(key),
+        getCrewActors: () => actors
+      },
+      permissionService: { filter: documents => Array.from(documents ?? []) },
+      settingProvider: key => settings.get(key),
+      settingWriter: async (key, value) => settings.set(key, value),
+      folderCreator: async data => {
+        const folder = { id: "crew-journals", ...data };
+        globalThis.game.folders.push(folder);
+        return folder;
+      },
+      journalCreator: async data => {
+        const journal = { id: `j${globalThis.game.journal.length + 1}`, uuid: `JournalEntry.j${globalThis.game.journal.length + 1}`, ...data };
+        globalThis.game.journal.push(journal);
+        return journal;
+      }
+    });
+    assert.deepEqual(await service.sync(), { created: 2, existing: 0, skipped: false, folderId: "crew-journals" });
+    assert.equal(globalThis.game.journal.length, 2);
+    assert.equal(globalThis.game.journal[0].flags["starfleet-computer"].actorUuid, "Actor.a1");
+    globalThis.game.journal[0].pages[0].text.content = "MCP content";
+    const second = await service.sync();
+    assert.equal(second.created, 0);
+    assert.equal(second.existing, 2);
+    assert.equal(globalThis.game.journal[0].pages[0].text.content, "MCP content");
+  } finally {
+    globalThis.game = previousGame;
+  }
 });
 
 test("toolkit adapter discovers systems and separates system and planet scenes", () => {

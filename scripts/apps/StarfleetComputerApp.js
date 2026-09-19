@@ -23,6 +23,9 @@ export class StarfleetComputerApp extends HandlebarsApplicationMixin(Application
       home: StarfleetComputerApp.homeAction,
       selectEntry: StarfleetComputerApp.selectEntryAction,
       selectCommunication: StarfleetComputerApp.selectCommunicationAction,
+      selectCrewTab: StarfleetComputerApp.selectCrewTabAction,
+      saveCrewFolder: StarfleetComputerApp.saveCrewFolderAction,
+      syncCrewJournals: StarfleetComputerApp.syncCrewJournalsAction,
       toggleComposer: StarfleetComputerApp.toggleComposerAction,
       createMessage: StarfleetComputerApp.createMessageAction,
       openAttachment: StarfleetComputerApp.openAttachmentAction,
@@ -45,7 +48,7 @@ export class StarfleetComputerApp extends HandlebarsApplicationMixin(Application
     content: { template: `modules/${MODULE_ID}/templates/computer.hbs` }
   };
 
-  constructor({ registry, dataService, permissionService, documentResolver, toolkitAdapter, communicationService, astrometricsService, searchService, commandRegistry } = {}, options = {}) {
+  constructor({ registry, dataService, permissionService, documentResolver, toolkitAdapter, communicationService, crewJournalService, astrometricsService, searchService, commandRegistry } = {}, options = {}) {
     super(options);
     this.registry = registry;
     this.dataService = dataService;
@@ -53,6 +56,7 @@ export class StarfleetComputerApp extends HandlebarsApplicationMixin(Application
     this.documents = documentResolver;
     this.toolkit = toolkitAdapter;
     this.communications = communicationService;
+    this.crewJournals = crewJournalService;
     this.astrometrics = astrometricsService;
     this.search = searchService;
     this.commands = commandRegistry;
@@ -68,6 +72,8 @@ export class StarfleetComputerApp extends HandlebarsApplicationMixin(Application
     if (!this.appState.has(appId)) {
       const initial = appId === APP_IDS.ASTROMETRICS
         ? { filters: { query: "", sector: "", region: "", affiliation: "", travelCode: "" } }
+        : appId === APP_IDS.CREW
+          ? { tab: "profiles" }
         : appId === APP_IDS.COMPUTER
           ? { history: [{ input: "", lines: [game.i18n.localize("STARFLEET.Terminal.Ready")], results: [] }] }
           : {};
@@ -88,6 +94,7 @@ export class StarfleetComputerApp extends HandlebarsApplicationMixin(Application
               data: this.dataService,
               toolkit: this.toolkit,
               communications: this.communications,
+              crewJournals: this.crewJournals,
               astrometrics: this.astrometrics,
               search: this.search,
               commands: this.commands,
@@ -204,6 +211,43 @@ export class StarfleetComputerApp extends HandlebarsApplicationMixin(Application
       ui.notifications.warn(game.i18n.localize("STARFLEET.Comms.ReadStateFailed"));
     }
     return this.renderParts(["navigation", "content"]);
+  }
+
+  static selectCrewTabAction(_event, target) {
+    this.stateFor(APP_IDS.CREW).tab = target.dataset.tab === "journals" ? "journals" : "profiles";
+    this.selectedId = null;
+    return this.renderParts(["content"]);
+  }
+
+  static async saveCrewFolderAction(event, target) {
+    event.preventDefault();
+    const form = target.closest("form");
+    try {
+      const result = await this.crewJournals.configureCrewFolder(form?.elements?.crewFolder?.value ?? "");
+      this.selectedId = null;
+      ui.notifications.info(game.i18n.format("STARFLEET.Crew.SyncComplete", {
+        created: result.created ?? 0,
+        existing: result.existing ?? 0
+      }));
+      await this.renderParts(["content"]);
+    } catch (error) {
+      console.error(`${MODULE_ID} | Failed to configure Crew`, error);
+      ui.notifications.error(error?.message || String(error));
+    }
+  }
+
+  static async syncCrewJournalsAction() {
+    try {
+      const result = await this.crewJournals.sync();
+      ui.notifications.info(game.i18n.format("STARFLEET.Crew.SyncComplete", {
+        created: result.created ?? 0,
+        existing: result.existing ?? 0
+      }));
+      await this.renderParts(["content"]);
+    } catch (error) {
+      console.error(`${MODULE_ID} | Failed to synchronize Crew journals`, error);
+      ui.notifications.error(error?.message || String(error));
+    }
   }
 
   static toggleComposerAction() {

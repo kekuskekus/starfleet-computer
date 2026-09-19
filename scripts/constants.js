@@ -3,6 +3,8 @@ export const TOOLKIT_ID = "sta2e-toolkit";
 
 export const SETTINGS = Object.freeze({
   PLAYER_ACCESS: "playerAccess",
+  CREW_FOLDER: "crewFolder",
+  CREW_JOURNALS_FOLDER: "crewJournalsFolder",
   LOGS_FOLDER: "logsFolder",
   DATABASE_FOLDER: "databaseFolder",
   FILES_FOLDER: "filesFolder",

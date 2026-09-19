@@ -32,6 +32,7 @@ Open the Computer from its dedicated computer icon in the Scene Controls toolbar
 
 Open **Configure Settings → Module Settings → Starfleet Computer**. Enter the Folder ID or Folder UUID for:
 
+- Crew Actors
 - Ship Logs
 - Database
 - Files
@@ -39,7 +40,7 @@ Open **Configure Settings → Module Settings → Starfleet Computer**. Enter th
 
 The configured Journal folder and all descendant folders are read dynamically. Standard Foundry ownership controls visibility. A player who cannot observe a document will not see it in the Computer. The GM sees all records.
 
-Crew includes permitted character Actors, player-owned Actors, and Actors explicitly marked with `flags["starfleet-computer"].app = "crew"`. Optional display metadata can be stored directly in the module flag namespace:
+Crew includes only permitted Actors in the configured Crew Actor folder and its descendant folders. A GM can choose the folder from **Computer → Crew** instead of copying its ID into settings. Saving the choice creates a Foundry Journal folder named **Crew Journals** and one linked Journal Entry for every Actor in the selected folder. Existing journal page content is preserved during later synchronization. Optional display metadata can be stored directly in the module flag namespace:
 
 ```json
 {
@@ -59,6 +60,40 @@ Crew includes permitted character Actors, player-owned Actors, and Actors explic
 ```
 
 The flags are optional. Source documents remain canonical and are never copied.
+
+## Database and Files
+
+**Database** is the knowledge browser. It combines three sources:
+
+- Journal Entries in the configured Database folder and descendant folders;
+- `sta2e-toolkit` Star System Actors, linked to Astrometrics;
+- other Actors whose `flags["starfleet-computer"].app` value is `"database"`.
+
+Database Journals are grouped by `flags["starfleet-computer"].category`; entries without a category appear under `general`.
+
+**Files** is a filesystem-style view over Journal Entries in the configured Files folder and descendant folders. To add a file, create a normal Foundry Journal Entry inside that folder. Nested Journal folders become its displayed path. To override the derived path, set `flags["starfleet-computer"].terminalPath`, for example `/starfleet/intelligence/cardassian`.
+
+Foundry ownership remains authoritative in both applications: users only see documents they can observe. MCP agents can update the same Journal Entries directly; the Computer reads their current titles, pages, folders and flags on refresh.
+
+## Crew journals and MCP
+
+Automatically created crew Journals use these flags:
+
+```json
+{
+  "flags": {
+    "starfleet-computer": {
+      "app": "crew-journal",
+      "actorUuid": "Actor.ABC123",
+      "actorId": "ABC123",
+      "category": "personnel",
+      "terminalPath": "/crew/character-name/journal"
+    }
+  }
+}
+```
+
+The `actorUuid` is the stable link MCP should use. MCP may edit Journal pages without touching these flags. The public API method `game.modules.get("starfleet-computer").api.syncCrewJournals()` creates any missing records without replacing existing page content.
 
 ## Communications
 

@@ -51,16 +51,54 @@
   {{else if (eq content.view "crew")}}
     <section>
       <div class="sf-section-title"><span>03</span><h2>{{localize "STARFLEET.App.Crew"}}</h2></div>
-      <div class="sf-crew-grid">
-        {{#each content.entries}}
-          <button type="button" class="sf-crew-card" data-action="selectEntry" data-id="{{id}}">
-            <img src="{{image}}" alt=""><span><strong>{{name}}</strong><small>{{role}} · {{species}}</small></span>
-          </button>
-        {{else}}<p class="sf-empty">{{localize "STARFLEET.State.NoRecords"}}</p>{{/each}}
-      </div>
-      {{#with content.selected}}
-        <article class="sf-profile"><img src="{{image}}" alt=""><div><p class="sf-kicker">{{role}} · {{species}}</p><h2>{{name}}</h2><p>{{description}}</p><button type="button" data-action="openCharacterSheet" data-uuid="{{uuid}}">{{localize "STARFLEET.OpenCharacterSheet"}}</button></div></article>
-      {{/with}}
+      {{#if content.canConfigure}}
+        <form class="sf-crew-config">
+          <label>{{localize "STARFLEET.Crew.SourceFolder"}}
+            <select name="crewFolder">
+              <option value="">{{localize "STARFLEET.Crew.SelectFolder"}}</option>
+              {{#each content.folderOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}
+            </select>
+          </label>
+          <button type="button" data-action="saveCrewFolder"><i class="fa-solid fa-floppy-disk"></i> {{localize "STARFLEET.Crew.SaveFolder"}}</button>
+          <button type="button" data-action="syncCrewJournals"><i class="fa-solid fa-rotate"></i> {{localize "STARFLEET.Crew.SyncJournals"}}</button>
+        </form>
+      {{/if}}
+      {{#if content.selectedFolderId}}
+        <nav class="sf-crew-tabs">
+          <button type="button" data-action="selectCrewTab" data-tab="profiles" class="{{#if (eq content.tab 'profiles')}}is-active{{/if}}"><i class="fa-solid fa-address-card"></i> {{localize "STARFLEET.Crew.Profiles"}} ({{content.profiles.length}})</button>
+          <button type="button" data-action="selectCrewTab" data-tab="journals" class="{{#if (eq content.tab 'journals')}}is-active{{/if}}"><i class="fa-solid fa-book-open"></i> {{localize "STARFLEET.Crew.Journals"}} ({{content.journals.length}})</button>
+        </nav>
+        {{#if (eq content.tab "journals")}}
+          <div class="sf-browser sf-crew-journals">
+            <aside class="sf-browser__list">
+              {{#each content.entries}}
+                <button type="button" data-action="selectEntry" data-id="{{id}}" class="sf-list-row {{#if (eq ../content.selected.id id)}}is-selected{{/if}}">
+                  <strong>{{actorName}}</strong><span>{{title}}</span>
+                </button>
+              {{else}}<p class="sf-empty">{{localize "STARFLEET.Crew.NoJournals"}}</p>{{/each}}
+            </aside>
+            <article class="sf-viewer">
+              {{#with content.selected}}
+                <p class="sf-kicker">{{actorName}}</p><h2>{{title}}</h2><div class="sf-prose">{{{html}}}</div>
+                <button type="button" data-action="openDocument" data-uuid="{{uuid}}">{{localize "STARFLEET.OpenSource"}}</button>
+              {{else}}<p class="sf-empty">{{localize "STARFLEET.State.SelectRecord"}}</p>{{/with}}
+            </article>
+          </div>
+        {{else}}
+          <div class="sf-crew-grid">
+            {{#each content.entries}}
+              <button type="button" class="sf-crew-card" data-action="selectEntry" data-id="{{id}}">
+                <img src="{{image}}" alt=""><span><strong>{{name}}</strong><small>{{role}} · {{species}}</small></span>
+              </button>
+            {{else}}<p class="sf-empty">{{localize "STARFLEET.State.NoRecords"}}</p>{{/each}}
+          </div>
+          {{#with content.selected}}
+            <article class="sf-profile"><img src="{{image}}" alt=""><div><p class="sf-kicker">{{role}} · {{species}}</p><h2>{{name}}</h2><p>{{description}}</p><button type="button" data-action="openCharacterSheet" data-uuid="{{uuid}}">{{localize "STARFLEET.OpenCharacterSheet"}}</button></div></article>
+          {{/with}}
+        {{/if}}
+      {{else}}
+        <p class="sf-empty">{{localize "STARFLEET.Crew.FolderRequired"}}</p>
+      {{/if}}
     </section>
   {{else if (eq content.view "files")}}
     <section>

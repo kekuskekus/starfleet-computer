@@ -1,4 +1,4 @@
-import { APP_IDS } from "../constants.js";
+import { APP_IDS, SETTINGS } from "../constants.js";
 
 export function registerBuiltins(registry) {
   registry.register({
@@ -35,7 +35,21 @@ export function registerBuiltins(registry) {
     id: APP_IDS.CREW,
     label: "STARFLEET.App.Crew",
     icon: "fa-solid fa-user-group",
-    async prepare({ data }) { return { view: "crew", entries: data.getCrew() }; }
+    async prepare({ data, crewJournals, state }) {
+      const tab = state.tab === "journals" ? "journals" : "profiles";
+      const profiles = data.getCrew();
+      const journals = await crewJournals.getJournals();
+      return {
+        view: "crew",
+        tab,
+        entries: tab === "journals" ? journals : profiles,
+        profiles,
+        journals,
+        canConfigure: game.user?.isGM === true,
+        selectedFolderId: data.configuredFolderId(SETTINGS.CREW_FOLDER),
+        folderOptions: data.getCrewFolderOptions()
+      };
+    }
   });
   registry.register({
     id: APP_IDS.FILES,
