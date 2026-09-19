@@ -6,6 +6,7 @@ import { DocumentResolver } from "./services/DocumentResolver.js";
 import { ComputerDataService } from "./services/ComputerDataService.js";
 import { CommunicationService } from "./services/CommunicationService.js";
 import { CrewJournalService } from "./services/CrewJournalService.js";
+import { RelationshipService } from "./services/RelationshipService.js";
 import { AstrometricsService } from "./services/AstrometricsService.js";
 import { SearchService } from "./services/SearchService.js";
 import { ComputerAppRegistry } from "./apps/ComputerAppRegistry.js";
@@ -85,6 +86,7 @@ function exposeApi() {
     get toolkit() { return services.toolkitAdapter; },
     get communications() { return services.communicationService; },
     get crewJournals() { return services.crewJournalService; },
+    get relationships() { return services.relationshipService; },
     get search() { return services.searchService; },
     syncCrewJournals() {
       return services.crewJournalService.sync();
@@ -156,6 +158,7 @@ Hooks.once("init", () => {
   const dataService = new ComputerDataService({ permissionService, toolkitAdapter });
   const communicationService = new CommunicationService({ dataService, permissionService, documentResolver });
   const crewJournalService = new CrewJournalService({ dataService, permissionService });
+  const relationshipService = new RelationshipService({ permissionService, toolkitAdapter });
   services = {
     registry,
     permissionService,
@@ -164,6 +167,7 @@ Hooks.once("init", () => {
     dataService,
     communicationService,
     crewJournalService,
+    relationshipService,
     astrometricsService: new AstrometricsService({ toolkitAdapter, permissionService }),
     searchService: new SearchService({ dataService, permissionService, toolkitAdapter, communicationService }),
     commandRegistry

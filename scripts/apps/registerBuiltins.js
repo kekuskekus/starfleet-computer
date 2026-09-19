@@ -52,6 +52,18 @@ export function registerBuiltins(registry) {
     }
   });
   registry.register({
+    id: APP_IDS.RELATIONS,
+    label: "STARFLEET.App.Relations",
+    icon: "fa-solid fa-handshake",
+    async prepare({ relationships }) {
+      return {
+        view: "relations",
+        entries: relationships.getRelations(),
+        canAdd: game.user?.isGM === true
+      };
+    }
+  });
+  registry.register({
     id: APP_IDS.FILES,
     label: "STARFLEET.App.Files",
     icon: "fa-solid fa-folder-tree",

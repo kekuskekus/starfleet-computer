@@ -27,6 +27,13 @@ export function registerSettings() {
     default: ""
   });
 
+  game.settings.register(MODULE_ID, SETTINGS.RELATIONSHIPS_FOLDER, {
+    scope: "world",
+    config: false,
+    type: String,
+    default: ""
+  });
+
   const folders = [
     [SETTINGS.LOGS_FOLDER, "LogsFolder"],
     [SETTINGS.DATABASE_FOLDER, "DatabaseFolder"],

@@ -11,6 +11,7 @@ import { CommandRegistry } from "../scripts/apps/CommandRegistry.js";
 import { registerCommands } from "../scripts/apps/registerCommands.js";
 import { ComputerDataService } from "../scripts/services/ComputerDataService.js";
 import { CrewJournalService } from "../scripts/services/CrewJournalService.js";
+import { RelationshipService } from "../scripts/services/RelationshipService.js";
 import { SETTINGS } from "../scripts/constants.js";
 
 test("manifest keeps STA2e Toolkit optional and supports Foundry 13 through 14", () => {
@@ -108,6 +109,84 @@ test("Crew journal synchronization creates stable Foundry records without replac
     assert.equal(globalThis.game.journal[0].pages[0].text.content, "MCP content");
   } finally {
     globalThis.game = previousGame;
+  }
+});
+
+test("NPC relationships create one Journal, persist reasons and clamp scores", async () => {
+  const previousGame = globalThis.game;
+  const previousConst = globalThis.CONST;
+  const settings = new Map([[SETTINGS.RELATIONSHIPS_FOLDER, ""]]);
+  const folders = new Map();
+  const journals = new Map();
+  const actor = {
+    id: "npc1", uuid: "Actor.npc1", documentName: "Actor", name: "Commander Vek",
+    img: "vek.webp", ownership: { default: 0 }
+  };
+  globalThis.CONST = { DOCUMENT_OWNERSHIP_LEVELS: { OWNER: 3 } };
+  globalThis.game = {
+    user: { id: "gm", name: "Адмирал", isGM: true },
+    actors: new Map([[actor.id, actor]]),
+    folders,
+    journal: journals,
+    i18n: { localize: key => key }
+  };
+  try {
+    const service = new RelationshipService({
+      permissionService: { filter: documents => Array.from(documents?.values?.() ?? documents ?? []) },
+      toolkitAdapter: { isStarSystemActor: () => false },
+      settingProvider: key => settings.get(key),
+      settingWriter: async (key, value) => settings.set(key, value),
+      folderCreator: async data => {
+        const folder = { id: "relationships", ...data };
+        folders.set(folder.id, folder);
+        return folder;
+      },
+      journalCreator: async data => {
+        const pageData = data.pages[0];
+        const page = {
+          id: "page1", ...pageData,
+          async update(changes) { this.text.content = changes["text.content"]; }
+        };
+        const journal = {
+          id: "relation1", uuid: "JournalEntry.relation1", ...data, pages: [page],
+          testUserPermission: () => true,
+          async update(changes) {
+            this.flags["starfleet-computer"].score = changes["flags.starfleet-computer.score"];
+            this.flags["starfleet-computer"].history = changes["flags.starfleet-computer.history"];
+          }
+        };
+        journals.set(journal.id, journal);
+        return journal;
+      }
+    });
+
+    const first = await service.addActor(actor.uuid);
+    assert.equal(first.created, true);
+    assert.equal((await service.addActor(actor.uuid)).created, false);
+    assert.equal(journals.size, 1);
+    assert.equal(first.journal.ownership.default, 3);
+
+    const change = await service.adjust(first.journal.id, 1, "Помог <экипажу>");
+    assert.equal(change.value, 1);
+    assert.equal(change.entry.reason, "Помог <экипажу>");
+    assert.match(first.journal.pages[0].text.content, /Помог &lt;экипажу&gt;/);
+    assert.equal(service.getRelations()[0].score, 1);
+
+    first.journal.flags["starfleet-computer"].score = 20;
+    assert.equal((await service.adjust(first.journal.id, 1, "beyond limit")).changed, false);
+    assert.equal(first.journal.flags["starfleet-computer"].history.length, 1);
+
+    const search = new SearchService({
+      dataService: { configuredFolderId: () => "", folderIds: () => new Set(), isCrewActor: () => false },
+      permissionService: { filter: documents => Array.from(documents?.values?.() ?? documents ?? []) },
+      toolkitAdapter: { isStarSystemActor: () => false }
+    });
+    const results = await search.search("помог экипажу");
+    assert.equal(results[0].appId, "relations");
+    assert.equal(results[0].type, "relationship");
+  } finally {
+    globalThis.game = previousGame;
+    globalThis.CONST = previousConst;
   }
 });
 
@@ -210,7 +289,7 @@ test("Russian commands cover navigation and pass Cyrillic queries to search", as
   registerCommands(registry);
   for (const [alias, id] of [
     ["помощь", "help"], ["главная", "home"], ["очистить", "clear"], ["поиск", "search"],
-    ["открыть", "open"], ["журналы", "logs"], ["база", "database"], ["экипаж", "crew"],
+    ["открыть", "open"], ["журналы", "logs"], ["база", "database"], ["экипаж", "crew"], ["отношения", "relations"],
     ["файлы", "files"], ["связь", "comms"], ["астрометрика", "astrometrics"], ["карта", "system"]
   ]) assert.equal(registry.get(alias)?.id, id);
 

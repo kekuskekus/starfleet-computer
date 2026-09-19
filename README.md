@@ -7,7 +7,7 @@ This release implements SC-01 through SC-07:
 - a resizable `ApplicationV2` shell with one instance per client;
 - Home, persistent navigation, status, user, world and Toolkit stardate display;
 - permission-filtered data services for Journals, Journal pages, Actors, Folders and Scenes;
-- Ship Logs, Database, Crew and filesystem-style Files applications;
+- Ship Logs, Database, Crew, NPC Relationships and filesystem-style Files applications;
 - persistent Communications with GM authoring, private recipients, unread state and UUID attachments;
 - Astrometrics discovery, filtering and navigation over Toolkit Star System Actors and generated Scenes;
 - permission-filtered local search and an extensible command terminal;
@@ -95,6 +95,31 @@ Automatically created crew Journals use these flags:
 
 The `actorUuid` is the stable link MCP should use. MCP may edit Journal pages without touching these flags. The public API method `game.modules.get("starfleet-computer").api.syncCrewJournals()` creates any missing records without replacing existing page content.
 
+## NPC relationships
+
+Open **Relationships** and, as a GM, drag an NPC Actor from Foundry's Actors directory onto the drop area. The Computer creates the **NPC Relationships** Journal folder and a dedicated Journal Entry for that NPC. Dropping the same Actor again reuses the existing relationship.
+
+The score starts at `0` and is limited to `-20` through `+20`. GMs and players with owner access to the relationship Journal can press **−** or **+**. An optional reason entered before the click is stored with the old score, new score, user and timestamp, and is also written into the Journal page. The automatically created Journals grant owner access by default so the whole group can use the counter; normal Foundry Journal ownership can be tightened afterward.
+
+Relationship records use stable module flags so MCP can find and update them:
+
+```json
+{
+  "flags": {
+    "starfleet-computer": {
+      "app": "relationship",
+      "actorUuid": "Actor.NPC123",
+      "actorId": "NPC123",
+      "score": 4,
+      "history": [],
+      "terminalPath": "/relations/NPC123"
+    }
+  }
+}
+```
+
+Preserve `app`, `actorUuid` and `actorId` when updating these Journals through MCP. The relationship tab and local search read the current flags and Journal page on refresh.
+
 ## Communications
 
 The GM creates transmissions from the Comms application. Messages are Journal Entries in the configured Communications folder and can be addressed to everyone, one Foundry User, one Actor, or a named group. The module sets Journal ownership to match the recipient and also filters the Computer inbox, so unrelated players do not receive private transmissions.
@@ -157,6 +182,7 @@ open / открыть <path>
 logs / журналы / логи [query]
 database / база / данные [query]
 crew / экипаж [query]
+relations / отношения / отношение [query]
 files / файлы [query]
 comms / связь / сообщения [query]
 astrometrics / астрометрика

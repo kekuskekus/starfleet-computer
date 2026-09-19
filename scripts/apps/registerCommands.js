@@ -52,6 +52,7 @@ export function registerCommands(registry) {
   scopedSearch({ id: "logs", aliases: ["журналы", "журнал", "логи"], appId: APP_IDS.LOGS, description: "STARFLEET.Command.Logs" });
   scopedSearch({ id: "database", aliases: ["база", "данные", "база-данных"], appId: APP_IDS.DATABASE, description: "STARFLEET.Command.Database" });
   scopedSearch({ id: "crew", aliases: ["экипаж"], appId: APP_IDS.CREW, description: "STARFLEET.Command.Crew" });
+  scopedSearch({ id: "relations", aliases: ["отношения", "отношение"], appId: APP_IDS.RELATIONS, description: "STARFLEET.Command.Relations" });
   scopedSearch({ id: "files", aliases: ["файлы", "файл"], appId: APP_IDS.FILES, description: "STARFLEET.Command.Files" });
   scopedSearch({ id: "comms", aliases: ["связь", "сообщения"], appId: APP_IDS.COMMS, description: "STARFLEET.Command.Comms" });
 

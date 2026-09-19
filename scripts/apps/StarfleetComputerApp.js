@@ -26,6 +26,7 @@ export class StarfleetComputerApp extends HandlebarsApplicationMixin(Application
       selectCrewTab: StarfleetComputerApp.selectCrewTabAction,
       saveCrewFolder: StarfleetComputerApp.saveCrewFolderAction,
       syncCrewJournals: StarfleetComputerApp.syncCrewJournalsAction,
+      adjustRelationship: StarfleetComputerApp.adjustRelationshipAction,
       toggleComposer: StarfleetComputerApp.toggleComposerAction,
       createMessage: StarfleetComputerApp.createMessageAction,
       openAttachment: StarfleetComputerApp.openAttachmentAction,
@@ -48,7 +49,7 @@ export class StarfleetComputerApp extends HandlebarsApplicationMixin(Application
     content: { template: `modules/${MODULE_ID}/templates/computer.hbs` }
   };
 
-  constructor({ registry, dataService, permissionService, documentResolver, toolkitAdapter, communicationService, crewJournalService, astrometricsService, searchService, commandRegistry } = {}, options = {}) {
+  constructor({ registry, dataService, permissionService, documentResolver, toolkitAdapter, communicationService, crewJournalService, relationshipService, astrometricsService, searchService, commandRegistry } = {}, options = {}) {
     super(options);
     this.registry = registry;
     this.dataService = dataService;
@@ -57,6 +58,7 @@ export class StarfleetComputerApp extends HandlebarsApplicationMixin(Application
     this.toolkit = toolkitAdapter;
     this.communications = communicationService;
     this.crewJournals = crewJournalService;
+    this.relationships = relationshipService;
     this.astrometrics = astrometricsService;
     this.search = searchService;
     this.commands = commandRegistry;
@@ -95,6 +97,7 @@ export class StarfleetComputerApp extends HandlebarsApplicationMixin(Application
               toolkit: this.toolkit,
               communications: this.communications,
               crewJournals: this.crewJournals,
+              relationships: this.relationships,
               astrometrics: this.astrometrics,
               search: this.search,
               commands: this.commands,
@@ -160,6 +163,37 @@ export class StarfleetComputerApp extends HandlebarsApplicationMixin(Application
     }
     const terminal = this.element.querySelector(".sf-terminal-output");
     if (terminal) terminal.scrollTop = terminal.scrollHeight;
+    const relationshipDropzone = this.element.querySelector(".sf-relations-dropzone");
+    if (relationshipDropzone) {
+      relationshipDropzone.addEventListener("dragover", event => {
+        event.preventDefault();
+        event.dataTransfer.dropEffect = "copy";
+        relationshipDropzone.classList.add("is-dragging");
+      });
+      relationshipDropzone.addEventListener("dragleave", () => relationshipDropzone.classList.remove("is-dragging"));
+      relationshipDropzone.addEventListener("drop", event => this._onRelationshipDrop(event));
+    }
+  }
+
+  async _onRelationshipDrop(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    event.currentTarget?.classList.remove("is-dragging");
+    try {
+      const textEditor = globalThis.foundry?.applications?.ux?.TextEditor ?? globalThis.TextEditor;
+      let data = textEditor?.getDragEventData?.(event) ?? {};
+      if (!data.uuid) {
+        const raw = event.dataTransfer?.getData("text/plain");
+        if (raw) data = JSON.parse(raw);
+      }
+      const uuid = data.uuid ?? (data.type === "Actor" && data.id ? `Actor.${data.id}` : "");
+      const result = await this.relationships.addActor(uuid);
+      ui.notifications.info(game.i18n.localize(result.created ? "STARFLEET.Relations.Created" : "STARFLEET.Relations.Exists"));
+      await this.renderParts(["content"]);
+    } catch (error) {
+      console.error(`${MODULE_ID} | Failed to add relationship`, error);
+      ui.notifications.error(error?.message || String(error));
+    }
   }
 
   async navigate(id, { selectedId = null, remember = true } = {}) {
@@ -246,6 +280,23 @@ export class StarfleetComputerApp extends HandlebarsApplicationMixin(Application
       await this.renderParts(["content"]);
     } catch (error) {
       console.error(`${MODULE_ID} | Failed to synchronize Crew journals`, error);
+      ui.notifications.error(error?.message || String(error));
+    }
+  }
+
+  static async adjustRelationshipAction(event, target) {
+    event.preventDefault();
+    const form = target.closest("form");
+    try {
+      const result = await this.relationships.adjust(
+        target.dataset.journalId,
+        Number(target.dataset.delta),
+        form?.elements?.reason?.value ?? ""
+      );
+      if (!result.changed) ui.notifications.warn(game.i18n.localize("STARFLEET.Relations.LimitReached"));
+      await this.renderParts(["content"]);
+    } catch (error) {
+      console.error(`${MODULE_ID} | Failed to adjust relationship`, error);
       ui.notifications.error(error?.message || String(error));
     }
   }

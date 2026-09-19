@@ -100,9 +100,41 @@
         <p class="sf-empty">{{localize "STARFLEET.Crew.FolderRequired"}}</p>
       {{/if}}
     </section>
+  {{else if (eq content.view "relations")}}
+    <section class="sf-relations">
+      <div class="sf-section-title"><span>04</span><h2>{{localize "STARFLEET.App.Relations"}}</h2></div>
+      {{#if content.canAdd}}
+        <div class="sf-relations-dropzone">
+          <i class="fa-solid fa-user-plus"></i>
+          <strong>{{localize "STARFLEET.Relations.DropNpc"}}</strong>
+          <span>{{localize "STARFLEET.Relations.DropHint"}}</span>
+        </div>
+      {{/if}}
+      <div class="sf-relations-grid">
+        {{#each content.entries}}
+          <article class="sf-relation-card sf-relation-card--{{tone}}">
+            <header><img src="{{image}}" alt=""><div><p class="sf-kicker">{{localize "STARFLEET.Relations.Npc"}}</p><h2>{{name}}</h2></div><strong class="sf-relation-score">{{score}}</strong></header>
+            <form class="sf-relation-adjust">
+              <input type="text" name="reason" placeholder="{{localize 'STARFLEET.Relations.Reason'}}" {{#if canAdjust}}{{else}}disabled{{/if}}>
+              {{#if canDecrease}}<button type="button" data-action="adjustRelationship" data-journal-id="{{id}}" data-delta="-1" aria-label="{{localize 'STARFLEET.Relations.Decrease'}}">−</button>{{else}}<button type="button" disabled>−</button>{{/if}}
+              {{#if canIncrease}}<button type="button" data-action="adjustRelationship" data-journal-id="{{id}}" data-delta="1" aria-label="{{localize 'STARFLEET.Relations.Increase'}}">+</button>{{else}}<button type="button" disabled>+</button>{{/if}}
+            </form>
+            <div class="sf-relation-actions">
+              <button type="button" data-action="openCharacterSheet" data-uuid="{{actorUuid}}">{{localize "STARFLEET.OpenCharacterSheet"}}</button>
+              <button type="button" data-action="openDocument" data-uuid="{{uuid}}">{{localize "STARFLEET.Relations.OpenJournal"}}</button>
+            </div>
+            <ol class="sf-relation-history">
+              {{#each history}}
+                <li><strong>{{deltaLabel}} → {{value}}</strong><span>{{reason}}</span><small>{{userName}} · {{timestampLabel}}</small></li>
+              {{else}}<li class="sf-empty">{{localize "STARFLEET.Relations.NoHistory"}}</li>{{/each}}
+            </ol>
+          </article>
+        {{else}}<p class="sf-empty">{{localize "STARFLEET.Relations.Empty"}}</p>{{/each}}
+      </div>
+    </section>
   {{else if (eq content.view "files")}}
     <section>
-      <div class="sf-section-title"><span>04</span><h2>{{localize "STARFLEET.App.Files"}}</h2></div>
+      <div class="sf-section-title"><span>05</span><h2>{{localize "STARFLEET.App.Files"}}</h2></div>
       <div class="sf-files">
         {{#each content.entries}}
           <button type="button" class="sf-file-row" data-action="selectEntry" data-id="{{id}}"><code>{{path}}/</code><strong>{{title}}</strong></button>
@@ -112,7 +144,7 @@
     </section>
   {{else if (eq content.view "comms")}}
     <section class="sf-comms">
-      <div class="sf-section-title"><span>05</span><h2>{{localize "STARFLEET.App.Comms"}}</h2>{{#if content.canCompose}}<button type="button" class="sf-compose-toggle" data-action="toggleComposer"><i class="fa-solid fa-plus"></i> {{localize "STARFLEET.Comms.New"}}</button>{{/if}}</div>
+      <div class="sf-section-title"><span>06</span><h2>{{localize "STARFLEET.App.Comms"}}</h2>{{#if content.canCompose}}<button type="button" class="sf-compose-toggle" data-action="toggleComposer"><i class="fa-solid fa-plus"></i> {{localize "STARFLEET.Comms.New"}}</button>{{/if}}</div>
       {{#if content.showComposer}}
         <form class="sf-composer">
           <label>{{localize "STARFLEET.Comms.Sender"}}<input type="text" name="sender" value="{{content.defaultSender}}" required></label>
@@ -149,7 +181,7 @@
     </section>
   {{else if (eq content.view "astrometrics")}}
     <section class="sf-astrometrics">
-      <div class="sf-section-title"><span>06</span><h2>{{localize "STARFLEET.App.Astrometrics"}}</h2></div>
+      <div class="sf-section-title"><span>07</span><h2>{{localize "STARFLEET.App.Astrometrics"}}</h2></div>
       <form class="sf-astro-filters">
         <input type="search" name="query" value="{{content.filters.query}}" placeholder="{{localize 'STARFLEET.Astrometrics.Search'}}">
         <select name="sector"><option value="">{{localize "STARFLEET.Astrometrics.AllSectors"}}</option>{{#each content.sectorOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select>
@@ -177,7 +209,7 @@
     </section>
   {{else if (eq content.view "computer")}}
     <section class="sf-terminal">
-      <div class="sf-section-title"><span>07</span><h2>{{localize "STARFLEET.Terminal.Title"}}</h2></div>
+      <div class="sf-section-title"><span>08</span><h2>{{localize "STARFLEET.Terminal.Title"}}</h2></div>
       <div class="sf-terminal-output">
         {{#each content.history}}<div class="sf-terminal-block {{#if error}}is-error{{/if}}">{{#if input}}<p class="sf-terminal-input">&gt; {{input}}</p>{{/if}}{{#each lines}}<p>{{this}}</p>{{/each}}{{#each results}}<button type="button" class="sf-search-result" data-action="openSearchResult" data-id="{{id}}" data-actor-id="{{actorId}}" data-uuid="{{uuid}}" data-type="{{type}}" data-app-id="{{appId}}"><strong>{{title}}</strong><span>{{path}}</span><small>{{excerpt}}</small></button>{{/each}}</div>{{/each}}
       </div>

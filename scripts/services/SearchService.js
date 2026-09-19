@@ -1,5 +1,6 @@
 import { APP_IDS, MODULE_ID, SETTINGS } from "../constants.js";
 import { CREW_JOURNAL_APP } from "./CrewJournalService.js";
+import { RELATIONSHIP_APP } from "./RelationshipService.js";
 
 const STOP_WORDS = new Set([
   "the", "and", "what", "where", "when", "who", "how", "about", "know", "with", "from", "that", "this", "are", "our",
@@ -74,7 +75,8 @@ export class SearchService {
       const configuredApp = folderApps.find(item => item.folderIds.has(folderId))?.appId ?? null;
       const flaggedApp = Object.values(APP_IDS).includes(flags.app) ? flags.app : null;
       const isCrewJournal = flags.app === CREW_JOURNAL_APP;
-      const appId = isCrewJournal ? APP_IDS.CREW : flaggedApp || configuredApp;
+      const isRelationship = flags.app === RELATIONSHIP_APP;
+      const appId = isCrewJournal ? APP_IDS.CREW : isRelationship ? APP_IDS.RELATIONS : flaggedApp || configuredApp;
       if (appId === APP_IDS.COMMS && this.communications && !this.communications.isAddressedTo(entry)) continue;
       const pages = this.permissions.filter(entry.pages);
       const pageText = pages.map(page => plainText(page.text?.content ?? "")).join(" ");
@@ -84,7 +86,7 @@ export class SearchService {
       records.push({
         id: entry.id,
         uuid: entry.uuid,
-        type: isCrewJournal ? CREW_JOURNAL_APP : appId === APP_IDS.LOGS ? "log" : appId === APP_IDS.FILES ? "file" : appId === APP_IDS.COMMS ? "communication" : "journal",
+        type: isCrewJournal ? CREW_JOURNAL_APP : isRelationship ? RELATIONSHIP_APP : appId === APP_IDS.LOGS ? "log" : appId === APP_IDS.FILES ? "file" : appId === APP_IDS.COMMS ? "communication" : "journal",
         appId,
         title: entry.name,
         path,
