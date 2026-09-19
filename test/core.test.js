@@ -9,7 +9,6 @@ import { AstrometricsService } from "../scripts/services/AstrometricsService.js"
 import { SearchService, plainText, searchTerms } from "../scripts/services/SearchService.js";
 import { CommandRegistry } from "../scripts/apps/CommandRegistry.js";
 import { registerCommands } from "../scripts/apps/registerCommands.js";
-import { installComputerSceneControl } from "../scripts/ui/entrypoints.js";
 
 test("manifest keeps STA2e Toolkit optional and supports Foundry 13 through 14", () => {
   const manifest = JSON.parse(readFileSync(new URL("../module.json", import.meta.url), "utf8"));
@@ -19,39 +18,13 @@ test("manifest keeps STA2e Toolkit optional and supports Foundry 13 through 14",
   assert.deepEqual(manifest.relationships.optional, [{ id: "sta2e-toolkit", type: "module" }]);
 });
 
-test("computer is installed as its own Scene Control for Foundry 13 and 14 shapes", () => {
-  const control = {
-    name: "starfleet-computer",
-    visible: true,
-    activeTool: "starfleet-computer-open",
-    tools: { "starfleet-computer-open": { button: true, visible: true } }
-  };
-  const objectControls = {
-    tokens: { tools: { select: { name: "select" } } },
-    tiles: { tools: {} }
-  };
-  assert.equal(installComputerSceneControl(objectControls, control), true);
-  assert.equal(objectControls[control.name].name, control.name);
-  assert.equal(objectControls[control.name].visible, true);
-  assert.equal(objectControls[control.name].order, 2);
-  assert.equal(objectControls.tokens.tools[control.name], undefined);
-
-  const arrayControls = [
-    { name: "tiles", tools: [] },
-    { name: "token", tools: [] }
-  ];
-  assert.equal(installComputerSceneControl(arrayControls, control), true);
-  assert.equal(arrayControls[2], control);
-  installComputerSceneControl(arrayControls, control);
-  assert.equal(arrayControls.length, 3);
-});
-
-test("scene and journal entry point hooks register before Foundry init", () => {
+test("launcher loads independently before the Computer application API", () => {
+  const manifest = JSON.parse(readFileSync(new URL("../module.json", import.meta.url), "utf8"));
+  assert.equal(manifest.esmodules[0], "scripts/launcher.js");
+  const launcher = readFileSync(new URL("../scripts/launcher.js", import.meta.url), "utf8");
+  assert.match(launcher, /doc\.body\.append\(button\)/);
+  assert.match(launcher, /visible|mountLauncher/);
   const source = readFileSync(new URL("../scripts/main.js", import.meta.url), "utf8");
-  const init = source.indexOf('Hooks.once("init"');
-  assert.ok(init > 0);
-  assert.ok(source.indexOf('Hooks.on("getSceneControlButtons"') < init);
-  assert.ok(source.indexOf('Hooks.on("renderJournalDirectory"') < init);
   assert.equal(source.includes('import { StarfleetComputerApp }'), false);
   assert.match(source, /await import\("\.\/apps\/StarfleetComputerApp\.js"\)/);
 });

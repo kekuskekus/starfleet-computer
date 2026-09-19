@@ -11,7 +11,6 @@ import { ComputerAppRegistry } from "./apps/ComputerAppRegistry.js";
 import { CommandRegistry } from "./apps/CommandRegistry.js";
 import { registerBuiltins } from "./apps/registerBuiltins.js";
 import { registerCommands } from "./apps/registerCommands.js";
-import { installComputerSceneControl } from "./ui/entrypoints.js";
 import * as components from "./components.js";
 
 let computer = null;
@@ -100,34 +99,6 @@ function queueComputerRefresh() {
   }, 75);
 }
 
-function computerControl() {
-  const title = game.i18n.localize("STARFLEET.OpenComputer");
-  const openTool = {
-    name: `${MODULE_ID}-open`,
-    title,
-    icon: "fa-solid fa-computer",
-    order: 0,
-    visible: true,
-    button: true,
-    onChange: () => openComputer()
-  };
-  return {
-    name: MODULE_ID,
-    title,
-    icon: "fa-solid fa-computer",
-    visible: true,
-    activeTool: openTool.name,
-    tools: { [openTool.name]: openTool },
-    onChange: (_event, active) => {
-      if (active !== false) openComputer();
-    }
-  };
-}
-
-function addSceneControl(controls) {
-  installComputerSceneControl(controls, computerControl());
-}
-
 function addJournalDirectoryButton(_app, html) {
   if (!playerAccessAllowed()) return;
   const root = html instanceof HTMLElement ? html : html?.[0] ?? html;
@@ -151,9 +122,6 @@ function addJournalDirectoryButton(_app, html) {
   actions.append(button);
 }
 
-// These render hooks can fire during Foundry initialization. Register them as
-// soon as the module is evaluated, before the init hook begins.
-Hooks.on("getSceneControlButtons", addSceneControl);
 Hooks.on("renderJournalDirectory", addJournalDirectoryButton);
 
 Hooks.once("init", () => {
