@@ -9,6 +9,7 @@ import { AstrometricsService } from "../scripts/services/AstrometricsService.js"
 import { SearchService, normalizeSearchText, plainText, searchTerms } from "../scripts/services/SearchService.js";
 import { CommandRegistry } from "../scripts/apps/CommandRegistry.js";
 import { registerCommands } from "../scripts/apps/registerCommands.js";
+import { registerBuiltins } from "../scripts/apps/registerBuiltins.js";
 import { ComputerDataService } from "../scripts/services/ComputerDataService.js";
 import { CrewJournalService } from "../scripts/services/CrewJournalService.js";
 import { RelationshipService } from "../scripts/services/RelationshipService.js";
@@ -39,6 +40,16 @@ test("registry orders built-in ids and rejects duplicates", () => {
   registry.register({ id: "home", label: "Home" });
   assert.deepEqual(registry.list().map(app => app.id), ["home", "crew"]);
   assert.throws(() => registry.register({ id: "home", label: "Again" }), /already registered/);
+});
+
+test("built-in navigation omits Ship Logs and Files", () => {
+  const registry = new ComputerAppRegistry();
+  registerBuiltins(registry);
+  assert.deepEqual(registry.list().map(app => app.id), [
+    "home", "database", "crew", "relations", "comms", "astrometrics", "computer"
+  ]);
+  assert.equal(registry.get("logs"), null);
+  assert.equal(registry.get("files"), null);
 });
 
 test("permissions honor GM access and observer ownership", () => {
@@ -294,9 +305,11 @@ test("Russian commands cover navigation and pass Cyrillic queries to search", as
   registerCommands(registry);
   for (const [alias, id] of [
     ["помощь", "help"], ["главная", "home"], ["очистить", "clear"], ["поиск", "search"],
-    ["открыть", "open"], ["журналы", "logs"], ["база", "database"], ["экипаж", "crew"], ["отношения", "relations"],
-    ["файлы", "files"], ["связь", "comms"], ["астрометрика", "astrometrics"], ["карта", "system"]
+    ["открыть", "open"], ["база", "database"], ["экипаж", "crew"], ["отношения", "relations"],
+    ["связь", "comms"], ["астрометрика", "astrometrics"], ["карта", "system"]
   ]) assert.equal(registry.get(alias)?.id, id);
+  assert.equal(registry.get("журналы"), null);
+  assert.equal(registry.get("файлы"), null);
 
   let received = "";
   const result = await registry.execute("поиск временной аномалии", {
@@ -304,7 +317,7 @@ test("Russian commands cover navigation and pass Cyrillic queries to search", as
   });
   assert.equal(received, "временной аномалии");
   assert.deepEqual(result.results, []);
-  assert.equal((await registry.execute("файлы", { search: {} })).navigate, "files");
+  assert.equal((await registry.execute("экипаж", { search: {} })).navigate, "crew");
 });
 
 test("search normalizes Cyrillic, Russian inflections, yo/e and Journal page names", async () => {

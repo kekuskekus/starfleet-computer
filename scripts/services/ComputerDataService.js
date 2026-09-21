@@ -94,12 +94,6 @@ export class ComputerDataService {
     };
   }
 
-  async getLogs() {
-    const entries = this.journalsFor(SETTINGS.LOGS_FOLDER);
-    const records = await Promise.all(entries.map(entry => this.journalRecord(entry, "log")));
-    return records.sort((a, b) => a.order - b.order || a.title.localeCompare(b.title));
-  }
-
   async getDatabaseEntries() {
     const journals = await Promise.all(this.journalsFor(SETTINGS.DATABASE_FOLDER).map(entry => this.journalRecord(entry, "journal")));
     const systems = this.toolkit.getStarSystems({ permissionService: this.permissions }).map(system => ({
@@ -177,23 +171,6 @@ export class ComputerDataService {
           description: stripHtml(description).slice(0, 320)
         };
       }).sort((a, b) => a.name.localeCompare(b.name));
-  }
-
-  async getFiles() {
-    const entries = this.journalsFor(SETTINGS.FILES_FOLDER);
-    const records = await Promise.all(entries.map(entry => this.journalRecord(entry, "file")));
-    return records.map(record => {
-      const entry = game.journal?.get(record.id);
-      const flags = getComputerFlags(entry);
-      const folderNames = [];
-      let folder = entry?.folder ?? null;
-      while (folder) {
-        folderNames.unshift(folder.name);
-        folder = folder.folder ?? folder.parent ?? null;
-      }
-      const derived = `/${folderNames.map(name => String(name).toLowerCase().replace(/[^\p{L}\p{N}]+/gu, "-")).join("/")}`;
-      return { ...record, path: flags.terminalPath || derived || "/" };
-    }).sort((a, b) => a.path.localeCompare(b.path) || a.title.localeCompare(b.title));
   }
 
   getWorldName() {

@@ -55,9 +55,7 @@ export class SearchService {
 
   journalApplications() {
     const definitions = [
-      [SETTINGS.LOGS_FOLDER, APP_IDS.LOGS],
       [SETTINGS.DATABASE_FOLDER, APP_IDS.DATABASE],
-      [SETTINGS.FILES_FOLDER, APP_IDS.FILES],
       [SETTINGS.COMMS_FOLDER, APP_IDS.COMMS]
     ];
     return definitions.map(([setting, appId]) => ({
@@ -86,7 +84,7 @@ export class SearchService {
       records.push({
         id: entry.id,
         uuid: entry.uuid,
-        type: isCrewJournal ? CREW_JOURNAL_APP : isRelationship ? RELATIONSHIP_APP : appId === APP_IDS.LOGS ? "log" : appId === APP_IDS.FILES ? "file" : appId === APP_IDS.COMMS ? "communication" : "journal",
+        type: isCrewJournal ? CREW_JOURNAL_APP : isRelationship ? RELATIONSHIP_APP : appId === APP_IDS.COMMS ? "communication" : "journal",
         appId,
         title: entry.name,
         path,

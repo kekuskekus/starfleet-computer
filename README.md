@@ -7,7 +7,7 @@ This release implements SC-01 through SC-07:
 - a resizable `ApplicationV2` shell with one instance per client;
 - Home, persistent navigation, status, user, world and Toolkit stardate display;
 - permission-filtered data services for Journals, Journal pages, Actors, Folders and Scenes;
-- Ship Logs, Database, Crew, NPC Relationships and filesystem-style Files applications;
+- Database, Crew and NPC Relationships applications;
 - persistent Communications with GM authoring, private recipients, unread state and UUID attachments;
 - Astrometrics discovery, filtering and navigation over Toolkit Star System Actors and generated Scenes;
 - permission-filtered local search and an extensible command terminal;
@@ -33,9 +33,7 @@ Open the Computer from its dedicated computer icon in the Scene Controls toolbar
 Open **Configure Settings → Module Settings → Starfleet Computer**. Enter the Folder ID or Folder UUID for:
 
 - Crew Actors
-- Ship Logs
 - Database
-- Files
 - Communications
 
 The configured Journal folder and all descendant folders are read dynamically. Standard Foundry ownership controls visibility. A player who cannot observe a document will not see it in the Computer. The GM sees all records.
@@ -46,11 +44,11 @@ Crew includes only permitted Actors in the configured Crew Actor folder and its 
 {
   "flags": {
     "starfleet-computer": {
-      "app": "logs",
+      "app": "database",
       "category": "mission",
       "author": "Captain",
       "stardate": "49523.7",
-      "terminalPath": "/logs/mission-12",
+      "terminalPath": "/database/mission-12",
       "order": 10,
       "role": "Chief Engineer",
       "species": "Human"
@@ -61,7 +59,7 @@ Crew includes only permitted Actors in the configured Crew Actor folder and its 
 
 The flags are optional. Source documents remain canonical and are never copied.
 
-## Database and Files
+## Database
 
 **Database** is the knowledge browser. It combines three sources:
 
@@ -71,9 +69,7 @@ The flags are optional. Source documents remain canonical and are never copied.
 
 Database Journals are grouped by `flags["starfleet-computer"].category`; entries without a category appear under `general`.
 
-**Files** is a filesystem-style view over Journal Entries in the configured Files folder and descendant folders. To add a file, create a normal Foundry Journal Entry inside that folder. Nested Journal folders become its displayed path. To override the derived path, set `flags["starfleet-computer"].terminalPath`, for example `/starfleet/intelligence/cardassian`.
-
-Foundry ownership remains authoritative in both applications: users only see documents they can observe. MCP agents can update the same Journal Entries directly; the Computer reads their current titles, pages, folders and flags on refresh.
+Foundry ownership remains authoritative: users only see documents they can observe. MCP agents can update the same Journal Entries directly; the Computer reads their current titles, pages, folders and flags on refresh.
 
 ## Crew journals and MCP
 
@@ -181,11 +177,9 @@ home / главная / домой
 clear / очистить
 search / поиск / найти <query>
 open / открыть <path>
-logs / журналы / логи [query]
 database / база / данные [query]
 crew / экипаж [query]
 relations / отношения / отношение [query]
-files / файлы [query]
 comms / связь / сообщения [query]
 astrometrics / астрометрика
 map / system / карта / система [query]

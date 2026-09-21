@@ -26,12 +26,6 @@ export function registerBuiltins(registry) {
     }
   });
   registry.register({
-    id: APP_IDS.LOGS,
-    label: "STARFLEET.App.Logs",
-    icon: "fa-solid fa-book",
-    async prepare({ data }) { return { view: "logs", entries: await data.getLogs() }; }
-  });
-  registry.register({
     id: APP_IDS.CREW,
     label: "STARFLEET.App.Crew",
     icon: "fa-solid fa-user-group",
@@ -62,12 +56,6 @@ export function registerBuiltins(registry) {
         canAdd: game.user?.isGM === true
       };
     }
-  });
-  registry.register({
-    id: APP_IDS.FILES,
-    label: "STARFLEET.App.Files",
-    icon: "fa-solid fa-folder-tree",
-    async prepare({ data }) { return { view: "files", entries: await data.getFiles() }; }
   });
   registry.register({
     id: APP_IDS.COMMS,

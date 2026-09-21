@@ -35,9 +35,7 @@ export function registerSettings() {
   });
 
   const folders = [
-    [SETTINGS.LOGS_FOLDER, "LogsFolder"],
     [SETTINGS.DATABASE_FOLDER, "DatabaseFolder"],
-    [SETTINGS.FILES_FOLDER, "FilesFolder"],
     [SETTINGS.COMMS_FOLDER, "CommsFolder"]
   ];
 

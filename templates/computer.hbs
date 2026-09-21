@@ -14,22 +14,6 @@
         {{/each}}
       </div>
     </section>
-  {{else if (eq content.view "logs")}}
-    <section class="sf-browser">
-      <aside class="sf-browser__list">
-        <h2>{{localize "STARFLEET.App.Logs"}}</h2>
-        {{#each content.entries}}
-          <button type="button" data-action="selectEntry" data-id="{{id}}" class="sf-list-row {{#if (eq ../content.selected.id id)}}is-selected{{/if}}">
-            <strong>{{title}}</strong><span>{{author}} · {{date}}</span>
-          </button>
-        {{else}}<p class="sf-empty">{{localize "STARFLEET.State.NoRecords"}}</p>{{/each}}
-      </aside>
-      <article class="sf-viewer">
-        {{#with content.selected}}
-          <p class="sf-kicker">{{category}} · {{author}} · {{date}}</p><h2>{{title}}</h2><div class="sf-prose">{{{html}}}</div>
-        {{else}}<p class="sf-empty">{{localize "STARFLEET.State.SelectRecord"}}</p>{{/with}}
-      </article>
-    </section>
   {{else if (eq content.view "database")}}
     <section>
       <div class="sf-section-title"><span>02</span><h2>{{localize "STARFLEET.App.Database"}}</h2></div>
@@ -134,19 +118,9 @@
         {{else}}<p class="sf-empty">{{localize "STARFLEET.Relations.Empty"}}</p>{{/each}}
       </div>
     </section>
-  {{else if (eq content.view "files")}}
-    <section>
-      <div class="sf-section-title"><span>05</span><h2>{{localize "STARFLEET.App.Files"}}</h2></div>
-      <div class="sf-files">
-        {{#each content.entries}}
-          <button type="button" class="sf-file-row" data-action="selectEntry" data-id="{{id}}"><code>{{path}}/</code><strong>{{title}}</strong></button>
-        {{else}}<p class="sf-empty">{{localize "STARFLEET.State.NoRecords"}}</p>{{/each}}
-      </div>
-      {{#with content.selected}}<article class="sf-inline-viewer"><p class="sf-kicker">{{path}}</p><h2>{{title}}</h2><div class="sf-prose">{{{html}}}</div></article>{{/with}}
-    </section>
   {{else if (eq content.view "comms")}}
     <section class="sf-comms">
-      <div class="sf-section-title"><span>06</span><h2>{{localize "STARFLEET.App.Comms"}}</h2>{{#if content.canCompose}}<button type="button" class="sf-compose-toggle" data-action="toggleComposer"><i class="fa-solid fa-plus"></i> {{localize "STARFLEET.Comms.New"}}</button>{{/if}}</div>
+      <div class="sf-section-title"><span>05</span><h2>{{localize "STARFLEET.App.Comms"}}</h2>{{#if content.canCompose}}<button type="button" class="sf-compose-toggle" data-action="toggleComposer"><i class="fa-solid fa-plus"></i> {{localize "STARFLEET.Comms.New"}}</button>{{/if}}</div>
       {{#if content.showComposer}}
         <form class="sf-composer">
           <label>{{localize "STARFLEET.Comms.Sender"}}<input type="text" name="sender" value="{{content.defaultSender}}" required></label>
@@ -183,7 +157,7 @@
     </section>
   {{else if (eq content.view "astrometrics")}}
     <section class="sf-astrometrics">
-      <div class="sf-section-title"><span>07</span><h2>{{localize "STARFLEET.App.Astrometrics"}}</h2></div>
+      <div class="sf-section-title"><span>06</span><h2>{{localize "STARFLEET.App.Astrometrics"}}</h2></div>
       <form class="sf-astro-filters">
         <input type="search" name="query" value="{{content.filters.query}}" placeholder="{{localize 'STARFLEET.Astrometrics.Search'}}">
         <select name="sector"><option value="">{{localize "STARFLEET.Astrometrics.AllSectors"}}</option>{{#each content.sectorOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select>
@@ -211,7 +185,7 @@
     </section>
   {{else if (eq content.view "computer")}}
     <section class="sf-terminal">
-      <div class="sf-section-title"><span>08</span><h2>{{localize "STARFLEET.Terminal.Title"}}</h2></div>
+      <div class="sf-section-title"><span>07</span><h2>{{localize "STARFLEET.Terminal.Title"}}</h2></div>
       <div class="sf-terminal-output">
         {{#each content.history}}<div class="sf-terminal-block {{#if error}}is-error{{/if}}">{{#if input}}<p class="sf-terminal-input">&gt; {{input}}</p>{{/if}}{{#each lines}}<p>{{this}}</p>{{/each}}{{#each results}}<button type="button" class="sf-search-result" data-action="openSearchResult" data-id="{{id}}" data-actor-id="{{actorId}}" data-uuid="{{uuid}}" data-type="{{type}}" data-app-id="{{appId}}"><strong>{{title}}</strong><span>{{path}}</span><small>{{excerpt}}</small></button>{{/each}}</div>{{/each}}
       </div>
