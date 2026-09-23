@@ -3,6 +3,10 @@ export const TOOLKIT_ID = "sta2e-toolkit";
 
 export const SETTINGS = Object.freeze({
   PLAYER_ACCESS: "playerAccess",
+  COMPUTER_KNOWLEDGE_FOLDER: "computerKnowledgeFolder",
+  COMPUTER_BRIDGE_URL: "computerBridgeUrl",
+  COMPUTER_BRIDGE_TOKEN: "computerBridgeToken",
+  COMPUTER_DISCOVERY_JOURNAL: "computerDiscoveryJournal",
   CREW_FOLDER: "crewFolder",
   CREW_JOURNALS_FOLDER: "crewJournalsFolder",
   RELATIONSHIPS_FOLDER: "relationshipsFolder",

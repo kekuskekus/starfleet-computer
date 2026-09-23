@@ -1,6 +1,12 @@
 import { MODULE_ID, SETTINGS } from "./constants.js";
 
 export function registerSettings() {
+  for (const [key, scope, value] of [
+    [SETTINGS.COMPUTER_KNOWLEDGE_FOLDER, "world", ""],
+    [SETTINGS.COMPUTER_DISCOVERY_JOURNAL, "world", ""],
+    [SETTINGS.COMPUTER_BRIDGE_URL, "client", "http://127.0.0.1:32123"],
+    [SETTINGS.COMPUTER_BRIDGE_TOKEN, "client", ""]
+  ]) game.settings.register(MODULE_ID, key, { scope, config: false, type: String, default: value });
   game.settings.register(MODULE_ID, SETTINGS.PLAYER_ACCESS, {
     name: "STARFLEET.Settings.PlayerAccess.Name",
     hint: "STARFLEET.Settings.PlayerAccess.Hint",

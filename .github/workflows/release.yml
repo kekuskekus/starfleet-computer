@@ -16,6 +16,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - run: npm ci
       - run: npm test
       - run: npm run check
       - name: Build module archive
@@ -23,11 +24,12 @@ jobs:
         run: |
           version="${GITHUB_REF_NAME#v}"
           mkdir -p dist/package
-          cp -r module.json README.md LICENSE scripts templates styles lang dist/package/
+          cp -r module.json README.md LICENSE package.json package-lock.json start-computer-bridge.cmd scripts templates styles lang bridge docs test dist/package/
           (cd dist/package && zip -r "../starfleet-computer-v${version}.zip" .)
           cp module.json dist/module.json
       - uses: softprops/action-gh-release@v2
         with:
+          prerelease: ${{ contains(github.ref_name, '-') }}
           files: |
             dist/module.json
             dist/starfleet-computer-*.zip

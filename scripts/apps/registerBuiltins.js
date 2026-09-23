@@ -85,8 +85,15 @@ export function registerBuiltins(registry) {
     id: APP_IDS.COMPUTER,
     label: "STARFLEET.App.Computer",
     icon: "fa-solid fa-terminal",
-    async prepare({ state }) {
-      return { view: "computer", history: state.history ?? [] };
+    async prepare({ state, knowledge, ai }) {
+      let config = null;
+      if (globalThis.game?.user?.isGM && knowledge) {
+        try { config = knowledge.debug(); }
+        catch { config = { folderOptions: knowledge.folderOptions(), journals: 0, pages: 0, revealed: [], corpusError: true }; }
+        config.status = ai?.status ?? "offline";
+        config.lastError = ai?.lastError ?? "";
+      }
+      return { view: "computer", history: state.history ?? [], pending: state.aiPending, config };
     }
   });
 }

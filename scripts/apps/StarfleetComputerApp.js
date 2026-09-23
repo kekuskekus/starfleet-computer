@@ -1,4 +1,5 @@
-import { APP_IDS, MODULE_ID } from "../constants.js";
+import { APP_IDS, MODULE_ID, SETTINGS } from "../constants.js";
+import { KB_LIMITS, recentContext, localBridgeUrl } from "../services/computerKnowledgeProtocol.js";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
@@ -35,6 +36,10 @@ export class StarfleetComputerApp extends HandlebarsApplicationMixin(Application
       selectSystem: StarfleetComputerApp.selectSystemAction,
       openScene: StarfleetComputerApp.openSceneAction,
       runCommand: StarfleetComputerApp.runCommandAction,
+      saveComputerKnowledge: StarfleetComputerApp.saveComputerKnowledgeAction,
+      refreshComputerKnowledge: StarfleetComputerApp.refreshComputerKnowledgeAction,
+      resetComputerSources: StarfleetComputerApp.resetComputerSourcesAction,
+      cancelComputerQuestion: StarfleetComputerApp.cancelComputerQuestionAction,
       openSearchResult: StarfleetComputerApp.openSearchResultAction,
       openDocument: StarfleetComputerApp.openDocumentAction,
       openCharacterSheet: StarfleetComputerApp.openCharacterSheetAction,
@@ -49,7 +54,7 @@ export class StarfleetComputerApp extends HandlebarsApplicationMixin(Application
     content: { template: `modules/${MODULE_ID}/templates/computer.hbs` }
   };
 
-  constructor({ registry, dataService, permissionService, documentResolver, toolkitAdapter, communicationService, crewJournalService, relationshipService, astrometricsService, searchService, commandRegistry } = {}, options = {}) {
+  constructor({ registry, dataService, permissionService, documentResolver, toolkitAdapter, communicationService, crewJournalService, relationshipService, astrometricsService, searchService, commandRegistry, knowledgeService, aiClient, computerSocket } = {}, options = {}) {
     super(options);
     this.registry = registry;
     this.dataService = dataService;
@@ -62,6 +67,9 @@ export class StarfleetComputerApp extends HandlebarsApplicationMixin(Application
     this.astrometrics = astrometricsService;
     this.search = searchService;
     this.commands = commandRegistry;
+    this.knowledge = knowledgeService;
+    this.ai = aiClient;
+    this.computerSocket = computerSocket;
     this.activeAppId = APP_IDS.HOME;
     this.history = [];
     this.selectedId = null;
@@ -101,6 +109,8 @@ export class StarfleetComputerApp extends HandlebarsApplicationMixin(Application
               astrometrics: this.astrometrics,
               search: this.search,
               commands: this.commands,
+              knowledge: this.knowledge,
+              ai: this.ai,
               registry: this.registry,
               selectedId: this.selectedId,
               state: this.stateFor(activeApp.id)
@@ -122,6 +132,10 @@ export class StarfleetComputerApp extends HandlebarsApplicationMixin(Application
     }
 
     if (appContext.view === "comms") appContext.showComposer = this.showComposer;
+    if (appContext.view === "computer" && appContext.config) {
+      appContext.config.bridgeUrl = game.settings.get(MODULE_ID, SETTINGS.COMPUTER_BRIDGE_URL);
+      appContext.config.statusLabel = game.i18n.localize(`STARFLEET.AI.Status.${appContext.config.status}`);
+    }
 
     const unreadCommunications = appContext.view === "comms"
       ? appContext.entries.reduce((count, entry) => count + (entry.isUnread ? 1 : 0), 0)
@@ -399,9 +413,13 @@ export class StarfleetComputerApp extends HandlebarsApplicationMixin(Application
     if (!input) return;
     const state = this.stateFor(APP_IDS.COMPUTER);
     try {
-      const result = await this.commands.execute(input, { search: this.search });
-      if (result.clear) state.history = [];
-      else state.history.push({ input, lines: result.lines ?? [], results: result.results ?? [] });
+      const ask = question => this.askComputer(question);
+      const enabled = Boolean(game.settings.get(MODULE_ID, SETTINGS.COMPUTER_KNOWLEDGE_FOLDER));
+      form.elements.command.value = "";
+      const result = await this.commands.execute(input, { search: this.search, ask, onUnknown: enabled ? ask : undefined });
+      if (result.discard) return;
+      if (result.clear) { state.history = []; state.aiController?.abort(); state.generation = (state.generation ?? 0) + 1; }
+      else state.history.push({ input, lines: result.lines ?? [], results: result.results ?? [], kind: result.kind, error: result.error });
       state.history = state.history.slice(-50);
       if (result.navigate) {
         await this.navigate(result.navigate);
@@ -417,6 +435,64 @@ export class StarfleetComputerApp extends HandlebarsApplicationMixin(Application
       state.history.push({ input, lines: [error?.message || String(error)], results: [], error: true });
       await this.renderParts(["content"]);
     }
+  }
+
+  async askComputer(question) {
+    const state = this.stateFor(APP_IDS.COMPUTER);
+    const line = key => game.i18n.localize(`STARFLEET.AI.${key}`);
+    if (state.aiPending) return { lines: [line("Busy")] };
+    if (question.length > KB_LIMITS.question) return { lines: [line("TooLong")], error: true };
+    const generation = state.generation ?? 0;
+    const controller = new AbortController();
+    state.aiController = controller; state.aiPending = true;
+    try {
+      await this.renderParts(["content"]);
+      const answer = await this.computerSocket.query(question, recentContext(state.history), controller.signal);
+      return generation === (state.generation ?? 0) ? { lines: [answer], kind: "ai" } : { discard: true };
+    } catch (error) {
+      if (generation !== (state.generation ?? 0)) return { discard: true };
+      if (controller.signal.aborted) return { lines: [line("Cancelled")] };
+      const results = await this.search.search(question);
+      return { lines: [line(error.message === "NoGM" ? "NoGM" : "Unavailable")], results, error: true };
+    } finally {
+      state.aiPending = false; state.aiController = null;
+      if (this.rendered) await this.renderParts(["content"]);
+    }
+  }
+
+  static cancelComputerQuestionAction() { this.stateFor(APP_IDS.COMPUTER).aiController?.abort(); }
+
+  async close(options) {
+    const state = this.stateFor(APP_IDS.COMPUTER);
+    state.generation = (state.generation ?? 0) + 1;
+    state.aiController?.abort();
+    return super.close(options);
+  }
+
+  static async saveComputerKnowledgeAction(_event, target) {
+    if (!game.user.isGM) return;
+    const panel = target.closest(".sf-kb-config");
+    try {
+      const url = localBridgeUrl(panel.querySelector('[name="bridgeUrl"]').value);
+      await this.knowledge.configure(panel.querySelector('[name="knowledgeFolder"]').value);
+      await game.settings.set(MODULE_ID, SETTINGS.COMPUTER_BRIDGE_URL, url);
+      const token = panel.querySelector('[name="bridgeToken"]').value.trim();
+      if (token) await game.settings.set(MODULE_ID, SETTINGS.COMPUTER_BRIDGE_TOKEN, token);
+      await this.computerSocket.refresh();
+      await this.renderParts(["content"]);
+    } catch { ui.notifications.error(game.i18n.localize("STARFLEET.AI.ConfigError")); }
+  }
+
+  static async refreshComputerKnowledgeAction() {
+    if (!game.user.isGM) return;
+    await this.computerSocket.refresh();
+    await this.renderParts(["content"]);
+  }
+
+  static async resetComputerSourcesAction() {
+    if (!game.user.isGM) return;
+    await this.knowledge.resetSources();
+    await this.renderParts(["content"]);
   }
 
   static openSearchResultAction(_event, target) {

@@ -9,6 +9,9 @@ import { CrewJournalService } from "./services/CrewJournalService.js";
 import { RelationshipService } from "./services/RelationshipService.js";
 import { AstrometricsService } from "./services/AstrometricsService.js";
 import { SearchService } from "./services/SearchService.js";
+import { ComputerKnowledgeService } from "./services/ComputerKnowledgeService.js";
+import { ComputerAiClient } from "./services/ComputerAiClient.js";
+import { ComputerSocketService, isComputerSessionUpdate } from "./services/ComputerSocketService.js";
 import { ComputerAppRegistry } from "./apps/ComputerAppRegistry.js";
 import { CommandRegistry } from "./apps/CommandRegistry.js";
 import { registerBuiltins } from "./apps/registerBuiltins.js";
@@ -159,7 +162,13 @@ Hooks.once("init", () => {
   const communicationService = new CommunicationService({ dataService, permissionService, documentResolver });
   const crewJournalService = new CrewJournalService({ dataService, permissionService });
   const relationshipService = new RelationshipService({ permissionService, toolkitAdapter });
+  const knowledgeService = new ComputerKnowledgeService({ dataService });
+  const aiClient = new ComputerAiClient({ knowledgeService });
+  const computerSocket = new ComputerSocketService({ aiClient });
   services = {
+    knowledgeService,
+    aiClient,
+    computerSocket,
     registry,
     permissionService,
     toolkitAdapter,
@@ -178,7 +187,9 @@ Hooks.once("init", () => {
     Hooks.on(`update${documentName}`, queueComputerRefresh);
     Hooks.on(`delete${documentName}`, queueComputerRefresh);
   }
-  Hooks.on("updateUser", (user) => {
+  Hooks.on("updateUser", (user, changes) => {
+    // Do not replace unsaved configuration inputs every time our key heartbeat updates.
+    if (isComputerSessionUpdate(changes)) return;
     if (user.id === game.user?.id) queueComputerRefresh();
   });
   for (const hook of ["createActor", "updateActor", "deleteActor"]) Hooks.on(hook, queueCrewJournalSync);
@@ -186,6 +197,7 @@ Hooks.once("init", () => {
 });
 
 Hooks.once("ready", queueCrewJournalSync);
+Hooks.once("ready", () => services.computerSocket.start());
 
 Hooks.on("closeStarfleetComputerApp", () => {
   computer = null;

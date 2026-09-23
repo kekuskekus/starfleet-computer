@@ -12,6 +12,12 @@ function countLine(results) {
 }
 
 export function registerCommands(registry) {
+  registry.register({ id: "ask", aliases: ["спроси"], description: "STARFLEET.Command.Ask",
+    execute: async ({ argument, ask }) => {
+      if (!argument) return { lines: [localize("STARFLEET.Command.Usage.Ask", "Usage: ask <question> / спроси <вопрос>")] };
+      return ask ? ask(argument) : { lines: [localize("STARFLEET.AI.Unavailable", "Computer intelligence interface unavailable. Use search.")] };
+    }
+  });
   registry.register({
     id: "help",
     aliases: ["помощь", "справка", "команды"],

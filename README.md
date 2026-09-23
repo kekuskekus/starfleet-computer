@@ -30,6 +30,17 @@ Open the Computer from its dedicated computer icon in the Scene Controls toolbar
 
 ## Configure content
 
+### Optional Codex knowledge base
+
+The existing **Computer** terminal can answer natural-language questions from a
+GM-selected Journal folder through a local Codex CLI bridge and MCP. Configure the
+folder and connection in the GM-only Computer knowledge panel. Players need no
+Codex installation, and source Journals can remain GM-only. `ask` / `спроси` requests
+an AI answer; `search`, navigation commands and Russian aliases remain local.
+No OpenAI API key is required. See [setup, operation and limitations](docs/codex-knowledge-base.md).
+
+### Existing application folders
+
 Open **Configure Settings → Module Settings → Starfleet Computer**. Enter the Folder ID or Folder UUID for:
 
 - Crew Actors

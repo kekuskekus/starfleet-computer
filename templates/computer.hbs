@@ -186,10 +186,30 @@
   {{else if (eq content.view "computer")}}
     <section class="sf-terminal">
       <div class="sf-section-title"><span>07</span><h2>{{localize "STARFLEET.Terminal.Title"}}</h2></div>
+      {{#if isGM}}
+      <details class="sf-kb-config">
+        <summary>{{localize "STARFLEET.AI.Configuration"}} · {{content.config.statusLabel}}</summary>
+        <div class="sf-kb-fields">
+          <label>{{localize "STARFLEET.AI.Folder"}}<select name="knowledgeFolder"><option value="">{{localize "STARFLEET.AI.Disabled"}}</option>{{#each content.config.folderOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}</select></label>
+          <label>{{localize "STARFLEET.AI.BridgeUrl"}}<input name="bridgeUrl" type="url" value="{{content.config.bridgeUrl}}"></label>
+          <label>{{localize "STARFLEET.AI.Pairing"}}<input name="bridgeToken" type="password" autocomplete="off" placeholder="{{localize 'STARFLEET.AI.PairingHint'}}"></label>
+        </div>
+        <button type="button" data-action="saveComputerKnowledge">{{localize "STARFLEET.AI.Save"}}</button>
+        <button type="button" data-action="refreshComputerKnowledge">{{localize "STARFLEET.AI.Refresh"}}</button>
+        <p>{{localize "STARFLEET.AI.Journals"}}: {{content.config.journals}} · {{localize "STARFLEET.AI.Pages"}}: {{content.config.pages}}</p>
+        {{#if content.config.corpusError}}<p class="sf-kb-error">{{localize "STARFLEET.AI.CorpusError"}}</p>{{/if}}
+        {{#if content.config.lastError}}<p class="sf-kb-error">{{content.config.lastError}}</p>{{/if}}
+        <details><summary>{{localize "STARFLEET.AI.Sources"}} ({{content.config.revealed.length}})</summary>
+          <ul>{{#each content.config.revealed}}<li>{{title}} <small>{{uuid}} · {{at}}</small></li>{{/each}}</ul>
+          <button type="button" data-action="resetComputerSources">{{localize "STARFLEET.AI.Reset"}}</button>
+        </details>
+      </details>
+      {{/if}}
       <div class="sf-terminal-output">
         {{#each content.history}}<div class="sf-terminal-block {{#if error}}is-error{{/if}}">{{#if input}}<p class="sf-terminal-input">&gt; {{input}}</p>{{/if}}{{#each lines}}<p>{{this}}</p>{{/each}}{{#each results}}<button type="button" class="sf-search-result" data-action="openSearchResult" data-id="{{id}}" data-actor-id="{{actorId}}" data-uuid="{{uuid}}" data-type="{{type}}" data-app-id="{{appId}}"><strong>{{title}}</strong><span>{{path}}</span><small>{{excerpt}}</small></button>{{/each}}</div>{{/each}}
       </div>
       <form class="sf-terminal-form"><span>&gt;</span><input type="text" name="command" autocomplete="off" autofocus placeholder="{{localize 'STARFLEET.Terminal.Placeholder'}}"><button type="button" data-action="runCommand" data-submit-action>{{localize "STARFLEET.Terminal.Execute"}}</button></form>
+      {{#if content.pending}}<div class="sf-kb-pending" role="status"><i class="fa-solid fa-spinner fa-spin"></i> {{localize "STARFLEET.AI.Loading"}} <button type="button" data-action="cancelComputerQuestion">{{localize "STARFLEET.AI.Cancel"}}</button></div>{{/if}}
     </section>
   {{else}}
     <section class="sf-state"><i class="fa-solid fa-circle-nodes"></i><h2>{{activeLabel}}</h2><p>{{content.emptyMessage}}</p></section>

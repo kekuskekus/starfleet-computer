@@ -34,6 +34,7 @@ export class CommandRegistry {
     const raw = String(input ?? "").trim();
     if (!raw) return { lines: [] };
     const [name, ...rest] = raw.split(/\s+/);
+    if (!this.get(name) && typeof context.onUnknown === "function") return context.onUnknown(raw);
     const command = this.get(name) ?? this.get("search");
     const argument = command?.id === "search" && !this.get(name) ? raw : rest.join(" ");
     return command.execute({ input: raw, argument, registry: this, ...context });

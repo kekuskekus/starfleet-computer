@@ -142,6 +142,15 @@
 .sf-planet-scenes { margin-top: 12px; }
 .sf-planet-scenes button { margin: 4px; padding: 7px 12px; border-radius: 15px; background: var(--sf-blue); color: #111; cursor: pointer; }
 .sf-terminal { display: flex; flex-direction: column; height: 100%; min-height: 380px; }
+.sf-kb-config { margin-bottom: 8px; padding: 8px 12px; border-left: 4px solid var(--sf-orange); background: var(--sf-panel-2); max-height: 240px; overflow: auto; }
+.sf-kb-config summary { cursor: pointer; color: var(--sf-orange); }
+.sf-kb-fields { display: flex; flex-wrap: wrap; gap: 10px; margin: 8px 0; }
+.sf-kb-fields label { flex: 1 1 200px; }
+.sf-kb-fields input, .sf-kb-fields select { width: 100%; }
+.sf-kb-config button, .sf-kb-pending button { width: auto; display: inline-block; padding: 4px 12px; }
+.sf-kb-config li small { display: block; overflow-wrap: anywhere; }
+.sf-kb-error { color: var(--sf-salmon); }
+.sf-kb-pending { padding: 8px; color: var(--sf-orange); }
 .sf-terminal-output { flex: 1; min-height: 260px; padding: 14px; overflow-y: auto; border: 2px solid var(--sf-blue); background: rgba(0, 0, 0, .68); color: #b8e8d0; font-family: "Cascadia Mono", Consolas, monospace; }
 .sf-terminal-block { margin-bottom: 14px; }
 .sf-terminal-block p { margin: 3px 0; }

@@ -1,10 +1,16 @@
 {
   "name": "starfleet-computer",
   "private": true,
-  "version": "0.9.3",
+  "version": "0.10.0-beta.1",
   "type": "module",
   "scripts": {
     "check": "node scripts/check.mjs",
-    "test": "node --test"
+    "test": "node --test",
+    "bridge": "node bridge/server.js",
+    "bridge:smoke": "node scripts/smoke-computer-ai.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.30.0",
+    "zod": "3.25.76"
   }
 }
