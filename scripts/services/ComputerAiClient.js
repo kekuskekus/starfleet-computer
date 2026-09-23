@@ -2,7 +2,7 @@ import { MODULE_ID, SETTINGS } from "../constants.js";
 import { KB_LIMITS, localBridgeUrl } from "./computerKnowledgeProtocol.js";
 
 export class ComputerAiClient {
-  constructor({ knowledgeService, gameProvider = () => game, fetcher = globalThis.fetch } = {}) {
+  constructor({ knowledgeService, gameProvider = () => game, fetcher = globalThis.fetch?.bind(globalThis) } = {}) {
     this.knowledge = knowledgeService; this.game = gameProvider; this.fetcher = fetcher;
     this.status = "offline"; this.lastError = "";
   }

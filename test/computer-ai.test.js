@@ -241,6 +241,24 @@ test("player bridge access is refused before any network or corpus read", async 
   await assert.rejects(client.request("/health"), /GM only/);
 });
 
+test("default bridge fetch preserves the browser Window receiver required by Firefox", async () => {
+  const originalFetch = globalThis.fetch;
+  let requestedUrl;
+  globalThis.fetch = async function (url) {
+    assert.equal(this, globalThis, "Browser fetch must retain its Window receiver");
+    requestedUrl = url;
+    return { ok: true, json: async () => ({ bridge: true, codex: { installed: true, authenticated: true } }) };
+  };
+  try {
+    const settings = new Map([[SETTINGS.COMPUTER_BRIDGE_TOKEN, "local-test-token"],
+      [SETTINGS.COMPUTER_BRIDGE_URL, "http://127.0.0.1:32123"]]);
+    const client = new ComputerAiClient({ gameProvider: () => ({ user: { isGM: true },
+      settings: { get: (_module, key) => settings.get(key) } }) });
+    assert.equal(await client.refresh(), "ready");
+    assert.equal(requestedUrl, "http://127.0.0.1:32123/health");
+  } finally { globalThis.fetch = originalFetch; }
+});
+
 test("session heartbeats do not trigger UI refresh but real user edits do", () => {
   assert.equal(isComputerSessionUpdate({ [`flags.${MODULE_ID}.computerAiSessions.someId`]: {} }), true);
   assert.equal(isComputerSessionUpdate({ flags: { [MODULE_ID]: { computerAiSessions: {} } } }), true);
