@@ -58,7 +58,8 @@
 .sf-browser { display: grid; grid-template-columns: minmax(220px, 34%) minmax(0, 1fr); gap: 18px; min-height: 100%; }
 .sf-browser__list, .sf-viewer, .sf-inline-viewer, .sf-profile, .sf-system-record { padding: 18px; border-radius: 4px 24px 4px 24px; background: color-mix(in srgb, var(--sf-panel) 94%, transparent); }
 .sf-browser__list { display: flex; flex-direction: column; gap: 7px; overflow-y: auto; }
-.sf-list-row { display: flex; flex-direction: column; gap: 3px; padding: 11px; border-left: 6px solid var(--sf-blue); background: var(--sf-panel-2); text-align: left; cursor: pointer; }
+.starfleet-computer .sf-list-row { display: flex; flex: 0 0 auto; flex-direction: column; align-items: stretch; justify-content: flex-start; box-sizing: border-box; width: 100%; height: auto !important; min-height: 68px; max-height: none !important; gap: 4px; padding: 11px; overflow: hidden; border-left: 6px solid var(--sf-blue); background: var(--sf-panel-2); line-height: 1.25; text-align: left; white-space: normal; cursor: pointer; }
+.starfleet-computer .sf-list-row > strong, .starfleet-computer .sf-list-row > span, .starfleet-computer .sf-list-row > small { flex: 0 0 auto; min-width: 0; margin: 0; overflow-wrap: anywhere; line-height: 1.25; }
 .sf-list-row span { color: #b9bfd0; font-size: .75rem; }
 .sf-list-row.is-selected { border-left-color: var(--sf-orange); background: #28314e; }
 .sf-viewer { overflow-y: auto; }
