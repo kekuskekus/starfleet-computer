@@ -100,6 +100,7 @@
 .sf-relation-adjust button:disabled { opacity: .3; cursor: default; }
 .sf-relation-actions { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 10px; }
 .sf-relation-actions button { padding: 7px 12px; border-radius: 14px; background: var(--sf-lilac); color: #111; cursor: pointer; }
+.starfleet-computer .sf-delete-button { background: var(--sf-salmon); color: #111; }
 .sf-relation-history { display: flex; flex-direction: column; gap: 6px; max-height: 210px; margin: 14px 0 0; padding: 0; overflow-y: auto; list-style: none; }
 .sf-relation-history li { display: grid; grid-template-columns: auto 1fr; gap: 2px 9px; padding: 8px 10px; border-left: 4px solid var(--sf-blue); background: var(--sf-panel-2); }
 .sf-relation-history li span { min-width: 0; overflow-wrap: anywhere; }

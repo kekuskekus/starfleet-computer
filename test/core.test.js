@@ -161,6 +161,7 @@ test("NPC relationships create one Journal, persist reasons and clamp scores", a
         const journal = {
           id: "relation1", uuid: "JournalEntry.relation1", ...data, pages: [page],
           testUserPermission: () => true,
+          async delete() { journals.delete(this.id); },
           async update(changes) {
             this.flags["starfleet-computer"].score = changes["flags.starfleet-computer.score"];
             this.flags["starfleet-computer"].history = changes["flags.starfleet-computer.history"];
@@ -186,6 +187,7 @@ test("NPC relationships create one Journal, persist reasons and clamp scores", a
     globalThis.game.user = { id: "player", name: "Игрок", isGM: false };
     assert.equal(service.canAdjust(first.journal), false);
     await assert.rejects(service.adjust(first.journal.id, -1, "Попытка игрока"), /You cannot change/);
+    await assert.rejects(service.delete(first.journal.id), /You cannot change/);
     globalThis.game.user = { id: "gm", name: "Адмирал", isGM: true };
 
     first.journal.flags["starfleet-computer"].score = 20;
@@ -200,6 +202,8 @@ test("NPC relationships create one Journal, persist reasons and clamp scores", a
     const results = await search.search("помог экипажу");
     assert.equal(results[0].appId, "relations");
     assert.equal(results[0].type, "relationship");
+    assert.equal((await service.delete(first.journal.id)).id, first.journal.id);
+    assert.equal(journals.size, 0);
   } finally {
     globalThis.game = previousGame;
     globalThis.CONST = previousConst;
@@ -254,6 +258,32 @@ test("actor-addressed communications grant Journal visibility only to its owners
   try {
     const service = new CommunicationService();
     assert.deepEqual(service.ownershipFor({ type: "actor", id: "a1" }), { default: 0, gm: 2, u1: 2 });
+  } finally {
+    globalThis.game = previousGame;
+  }
+});
+
+test("only a GM can delete managed communications", async () => {
+  const previousGame = globalThis.game;
+  const journals = new Map();
+  const entry = {
+    id: "message1",
+    flags: { "starfleet-computer": { app: "comms" } },
+    async delete() { journals.delete(this.id); }
+  };
+  journals.set(entry.id, entry);
+  globalThis.game = {
+    user: { id: "player", isGM: false },
+    journal: journals,
+    i18n: { localize: key => key === "STARFLEET.Comms.GMOnly" ? "Only a GM can delete transmissions." : key }
+  };
+  try {
+    const service = new CommunicationService();
+    await assert.rejects(service.deleteMessage(entry.id), /Only a GM/);
+    assert.equal(journals.size, 1);
+    globalThis.game.user = { id: "gm", isGM: true };
+    assert.equal((await service.deleteMessage(entry.id)).id, entry.id);
+    assert.equal(journals.size, 0);
   } finally {
     globalThis.game = previousGame;
   }

@@ -108,6 +108,7 @@
             <div class="sf-relation-actions">
               <button type="button" data-action="openCharacterSheet" data-uuid="{{actorUuid}}">{{localize "STARFLEET.OpenCharacterSheet"}}</button>
               <button type="button" data-action="openDocument" data-uuid="{{uuid}}">{{localize "STARFLEET.Relations.OpenJournal"}}</button>
+              {{#if canDelete}}<button type="button" class="sf-delete-button" data-action="deleteRelationship" data-journal-id="{{id}}"><i class="fa-solid fa-trash"></i> {{localize "STARFLEET.Relations.Delete"}}</button>{{/if}}
             </div>
             <ol class="sf-relation-history">
               {{#each history}}
@@ -151,6 +152,7 @@
             {{#if image}}<img class="sf-message-image" src="{{image}}" alt="">{{/if}}
             <div class="sf-prose">{{{html}}}</div>
             {{#if attachmentUuid}}<button type="button" data-action="openAttachment" data-uuid="{{attachmentUuid}}"><i class="fa-solid fa-paperclip"></i> {{localize "STARFLEET.Comms.OpenAttachment"}}</button>{{/if}}
+            {{#if canDelete}}<button type="button" class="sf-delete-button" data-action="deleteCommunication" data-journal-id="{{id}}"><i class="fa-solid fa-trash"></i> {{localize "STARFLEET.Comms.Delete"}}</button>{{/if}}
           {{else}}<p class="sf-empty">{{localize "STARFLEET.Comms.SelectMessage"}}</p>{{/with}}
         </article>
       </div>

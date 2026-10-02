@@ -120,6 +120,7 @@ export class CommunicationService {
         encrypted: flags.encrypted === true,
         attachmentUuid: flags.attachmentUuid || "",
         image: flags.image || "",
+        canDelete: this.canDelete(entry, user),
         isRead: read.has(entry.uuid),
         isUnread: !read.has(entry.uuid)
       });
@@ -130,6 +131,21 @@ export class CommunicationService {
   async getUnreadCount(user = game.user) {
     const messages = await this.getMessages({ user });
     return messages.reduce((count, message) => count + (message.isUnread ? 1 : 0), 0);
+  }
+
+  canDelete(entry, user = game.user) {
+    return user?.isGM === true && moduleFlags(entry).app === "comms";
+  }
+
+  async deleteMessage(journalId) {
+    const entry = game.journal?.get?.(journalId)
+      ?? collectionValues(game.journal).find(candidate => candidate.id === journalId);
+    if (!entry || moduleFlags(entry).app !== "comms") {
+      throw new Error(game.i18n.localize("STARFLEET.Comms.NotFound"));
+    }
+    if (!this.canDelete(entry)) throw new Error(game.i18n.localize("STARFLEET.Comms.GMOnly"));
+    await entry.delete();
+    return entry;
   }
 
   async markRead(uuid, user = game.user) {

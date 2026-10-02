@@ -146,6 +146,23 @@ export class RelationshipService {
     return user?.isGM === true;
   }
 
+  canDelete(journal, user = game.user) {
+    return user?.isGM === true && flagsFor(journal).app === RELATIONSHIP_APP;
+  }
+
+  async delete(journalId) {
+    const journal = game.journal?.get?.(journalId)
+      ?? collectionValues(game.journal).find(entry => entry.id === journalId);
+    if (!journal || flagsFor(journal).app !== RELATIONSHIP_APP) {
+      throw new Error(localize("STARFLEET.Relations.NotFound", "Relationship record not found."));
+    }
+    if (!this.canDelete(journal)) {
+      throw new Error(localize("STARFLEET.Relations.NoPermission", "You cannot change this relationship."));
+    }
+    await journal.delete();
+    return journal;
+  }
+
   async adjust(journalId, delta, reason = "") {
     const current = this.adjustments.get(journalId) ?? Promise.resolve();
     const adjustment = current.then(() => this._adjust(journalId, delta, reason));
@@ -224,6 +241,7 @@ export class RelationshipService {
           tone: scoreTone(score),
           history,
           canAdjust: this.canAdjust(entry),
+          canDelete: this.canDelete(entry),
           canIncrease: score < 20 && this.canAdjust(entry),
           canDecrease: score > -20 && this.canAdjust(entry)
         };

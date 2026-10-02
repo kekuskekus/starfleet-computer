@@ -28,8 +28,10 @@ export class StarfleetComputerApp extends HandlebarsApplicationMixin(Application
       saveCrewFolder: StarfleetComputerApp.saveCrewFolderAction,
       syncCrewJournals: StarfleetComputerApp.syncCrewJournalsAction,
       adjustRelationship: StarfleetComputerApp.adjustRelationshipAction,
+      deleteRelationship: StarfleetComputerApp.deleteRelationshipAction,
       toggleComposer: StarfleetComputerApp.toggleComposerAction,
       createMessage: StarfleetComputerApp.createMessageAction,
+      deleteCommunication: StarfleetComputerApp.deleteCommunicationAction,
       openAttachment: StarfleetComputerApp.openAttachmentAction,
       applyAstrometricsFilters: StarfleetComputerApp.applyAstrometricsFiltersAction,
       resetAstrometricsFilters: StarfleetComputerApp.resetAstrometricsFiltersAction,
@@ -315,6 +317,29 @@ export class StarfleetComputerApp extends HandlebarsApplicationMixin(Application
     }
   }
 
+  static async confirmDeletion(messageKey) {
+    const dialog = globalThis.foundry?.applications?.api?.DialogV2;
+    if (!dialog?.confirm) return false;
+    return (await dialog.confirm({
+      content: `<p>${game.i18n.localize(messageKey)}</p>`,
+      rejectClose: false,
+      modal: true
+    })) === true;
+  }
+
+  static async deleteRelationshipAction(event, target) {
+    event.preventDefault();
+    if (!await this.confirmDeletion("STARFLEET.Relations.DeleteConfirm")) return;
+    try {
+      await this.relationships.delete(target.dataset.journalId);
+      ui.notifications.info(game.i18n.localize("STARFLEET.Relations.Deleted"));
+      await this.renderParts(["content"]);
+    } catch (error) {
+      console.error(`${MODULE_ID} | Failed to delete relationship`, error);
+      ui.notifications.error(error?.message || String(error));
+    }
+  }
+
   static toggleComposerAction() {
     this.showComposer = !this.showComposer;
     return this.renderParts(["content"]);
@@ -334,6 +359,20 @@ export class StarfleetComputerApp extends HandlebarsApplicationMixin(Application
       await this.renderParts(["navigation", "content"]);
     } catch (error) {
       console.error(`${MODULE_ID} | Failed to create communication`, error);
+      ui.notifications.error(error?.message || String(error));
+    }
+  }
+
+  static async deleteCommunicationAction(event, target) {
+    event.preventDefault();
+    if (!await this.confirmDeletion("STARFLEET.Comms.DeleteConfirm")) return;
+    try {
+      await this.communications.deleteMessage(target.dataset.journalId);
+      if (this.selectedId === target.dataset.journalId) this.selectedId = null;
+      ui.notifications.info(game.i18n.localize("STARFLEET.Comms.Deleted"));
+      await this.renderParts(["navigation", "content"]);
+    } catch (error) {
+      console.error(`${MODULE_ID} | Failed to delete communication`, error);
       ui.notifications.error(error?.message || String(error));
     }
   }
