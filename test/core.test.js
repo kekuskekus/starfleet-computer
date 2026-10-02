@@ -13,6 +13,7 @@ import { registerBuiltins } from "../scripts/apps/registerBuiltins.js";
 import { ComputerDataService } from "../scripts/services/ComputerDataService.js";
 import { CrewJournalService } from "../scripts/services/CrewJournalService.js";
 import { RelationshipService } from "../scripts/services/RelationshipService.js";
+import { confirmDeletion } from "../scripts/apps/confirmDeletion.js";
 import { SETTINGS } from "../scripts/constants.js";
 
 test("manifest keeps STA2e Toolkit optional and supports Foundry 13 through 14", () => {
@@ -21,6 +22,20 @@ test("manifest keeps STA2e Toolkit optional and supports Foundry 13 through 14",
   assert.equal(manifest.compatibility.maximum, "14");
   assert.equal(manifest.relationships.requires, undefined);
   assert.deepEqual(manifest.relationships.optional, [{ id: "sta2e-toolkit", type: "module" }]);
+});
+
+test("delete confirmation uses DialogV2 without relying on application instance methods", async () => {
+  let received;
+  const confirmed = await confirmDeletion("STARFLEET.Relations.DeleteConfirm", {
+    dialogProvider: () => ({ confirm: async options => { received = options; return true; } }),
+    localize: () => "Удалить запись?"
+  });
+  assert.equal(confirmed, true);
+  assert.deepEqual(received, {
+    content: "<p>Удалить запись?</p>",
+    rejectClose: false,
+    modal: true
+  });
 });
 
 test("launcher loads independently before the Computer application API", () => {

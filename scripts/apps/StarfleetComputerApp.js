@@ -1,5 +1,6 @@
 import { APP_IDS, MODULE_ID, SETTINGS } from "../constants.js";
 import { KB_LIMITS, recentContext, localBridgeUrl } from "../services/computerKnowledgeProtocol.js";
+import { confirmDeletion } from "./confirmDeletion.js";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
@@ -317,19 +318,9 @@ export class StarfleetComputerApp extends HandlebarsApplicationMixin(Application
     }
   }
 
-  static async confirmDeletion(messageKey) {
-    const dialog = globalThis.foundry?.applications?.api?.DialogV2;
-    if (!dialog?.confirm) return false;
-    return (await dialog.confirm({
-      content: `<p>${game.i18n.localize(messageKey)}</p>`,
-      rejectClose: false,
-      modal: true
-    })) === true;
-  }
-
   static async deleteRelationshipAction(event, target) {
     event.preventDefault();
-    if (!await this.confirmDeletion("STARFLEET.Relations.DeleteConfirm")) return;
+    if (!await confirmDeletion("STARFLEET.Relations.DeleteConfirm")) return;
     try {
       await this.relationships.delete(target.dataset.journalId);
       ui.notifications.info(game.i18n.localize("STARFLEET.Relations.Deleted"));
@@ -365,7 +356,7 @@ export class StarfleetComputerApp extends HandlebarsApplicationMixin(Application
 
   static async deleteCommunicationAction(event, target) {
     event.preventDefault();
-    if (!await this.confirmDeletion("STARFLEET.Comms.DeleteConfirm")) return;
+    if (!await confirmDeletion("STARFLEET.Comms.DeleteConfirm")) return;
     try {
       await this.communications.deleteMessage(target.dataset.journalId);
       if (this.selectedId === target.dataset.journalId) this.selectedId = null;
